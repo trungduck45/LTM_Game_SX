@@ -51,7 +51,7 @@ public void run() {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
-        out.println("Enter username:");
+       // out.println("Enter username:");
         username = in.readLine();
 
         // Bắt đầu game
@@ -62,7 +62,7 @@ public void run() {
             String sortedNumbers = in.readLine();
             List<Integer> userSorted = parseNumbers(sortedNumbers);
 
-            if (isSorted(userSorted)) {
+            if (isSorted(userSorted, numbers)) {
                 score += 10;
                 out.println("Correct! +10 points.");
             } else {
@@ -96,28 +96,30 @@ public void run() {
         return numbers;
     }
 
-        private List<Integer> parseNumbers(String input) {
-            List<Integer> numbers = new ArrayList<>();
+    private List<Integer> parseNumbers(String input) {
+        List<Integer> numbers = new ArrayList<>();
             String[] parts = input.split(",");
             for (String part : parts) {
                 numbers.add(Integer.parseInt(part.trim()));
             }
             return numbers;
-        }
+        }      
 
-        private boolean isSorted(List<Integer> list) {
-            for (int i = 1; i < list.size(); i++) {
-                if (list.get(i) < list.get(i - 1)) {
+    private boolean isSorted(List<Integer> list,List<Integer> ListBanDau) {
+       
+        Collections.sort(ListBanDau);
+            for (int i = 0; i < list.size(); i++) {
+                if (list.get(i) != ListBanDau.get(i )) {
                     return false;
                 }
             }
             return true;
         }
 
-        private void broadcast(String message) {
+    private void broadcast(String message) {
             for (ClientHandler client : clients) {
                 client.out.println(message);
             }
-        }
+        }        
     }
 }

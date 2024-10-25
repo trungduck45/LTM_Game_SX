@@ -1,4 +1,4 @@
-    package com.btl.gamesxclients;
+package com.btl.gamesxclients;
 
 import javax.swing.*;
 import java.awt.*;
@@ -9,7 +9,8 @@ import java.util.List;
 
 public class GameScreen extends JFrame {
     private List<JTextField> inputFields = new ArrayList<>();
-    private List<JLabel> serverLabels = new ArrayList<>();
+    private JPanel serverRow;
+    private JPanel inputRow;
     private PrintWriter out;
     private BufferedReader in;
 
@@ -19,10 +20,10 @@ public class GameScreen extends JFrame {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            out.println(playerName);  // Gửi tên người chơi đến server
+            out.println(playerName); // Gửi tên người chơi tới server
 
             initGameUI();
-            new Thread(new ServerListener(in, this)).start();  // Lắng nghe server
+            new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Không thể kết nối đến server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -35,37 +36,32 @@ public class GameScreen extends JFrame {
         setSize(500, 300);
         setLayout(new BorderLayout());
 
-        JPanel serverRow = new JPanel();
-        JPanel inputRow = new JPanel();
+        serverRow = new JPanel(new FlowLayout());
+        inputRow = new JPanel(new FlowLayout());
 
-        // Các nhãn và ô nhập liệu sẽ được thêm vào sau khi nhận dữ liệu từ server
         add(serverRow, BorderLayout.NORTH);
         add(inputRow, BorderLayout.CENTER);
 
-        JButton sendButton = new JButton("Gửi");
+        JButton sendButton = new JButton("Check");
         sendButton.addActionListener(e -> sendSortedNumbers());
 
         add(sendButton, BorderLayout.SOUTH);
-
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
 
     public void updateServerNumbers(String[] numbers) {
-        resetInputFields();  // Reset các ô nhập trước khi cập nhật số mới
-
-        // Xóa các nhãn và ô nhập cũ
-        serverLabels.clear();
-        inputFields.clear();
-
-        JPanel serverRow = (JPanel) getContentPane().getComponent(0);
-        JPanel inputRow = (JPanel) getContentPane().getComponent(1);
+        // Xóa các phần tử cũ trước khi thêm mới
+        serverRow.removeAll();
+        inputRow.removeAll();
+        inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
 
         for (String number : numbers) {
-            // Tạo nhãn và ô nhập cho từng số
+            // Tạo nhãn cho mỗi số nhận từ server
             JLabel serverLabel = new JLabel(number.trim());
-            serverLabels.add(serverLabel);
             serverRow.add(serverLabel);
 
+            // Tạo ô nhập liệu để người dùng nhập số đã sắp xếp
             JTextField inputField = new JTextField(2);
             inputFields.add(inputField);
             inputRow.add(inputField);
@@ -78,20 +74,22 @@ public class GameScreen extends JFrame {
         inputRow.repaint();
     }
 
-    private void resetInputFields() {
-        for (JTextField field : inputFields) {
-            field.setText(""); // Đặt lại nội dung của ô nhập về chuỗi rỗng
-        }
-    }
-
     private void sendSortedNumbers() {
         try {
             StringBuilder sortedNumbers = new StringBuilder();
             for (JTextField field : inputFields) {
-                int number = Integer.parseInt(field.getText().trim());
-                sortedNumbers.append(number).append(",");
+                String text = field.getText().trim();
+                if (text.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                sortedNumbers.append(Integer.parseInt(text)).append(",");
             }
-            out.println(sortedNumbers.toString());
+            // Xóa dấu phẩy cuối cùng
+            if (sortedNumbers.length() > 0) {
+                sortedNumbers.setLength(sortedNumbers.length() - 1);
+            }
+            out.println(sortedNumbers.toString()); // Gửi dãy số đã sắp xếp tới server
         } catch (NumberFormatException e) {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập số hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }

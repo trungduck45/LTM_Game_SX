@@ -15,7 +15,7 @@ public class NameScreen extends JFrame {
 
         JLabel nameLabel = new JLabel("Nhập tên của bạn:");
         nameField = new JTextField(20);
-        JButton startButton = new JButton("Bắt đầu chơi");
+        JButton startButton = new JButton("Bắt đầu trò chơi");
 
         JPanel inputPanel = new JPanel();
         inputPanel.add(nameLabel);
