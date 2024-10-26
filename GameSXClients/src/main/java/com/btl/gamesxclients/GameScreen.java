@@ -13,6 +13,8 @@ public class GameScreen extends JFrame {
     private JPanel inputRow;
     private PrintWriter out;
     private BufferedReader in;
+    
+    private JLabel scoreLabel; 
 
     public GameScreen(String serverAddress, String playerName) {
         try {
@@ -35,17 +37,30 @@ public class GameScreen extends JFrame {
         setTitle("Trò chơi sắp xếp");
         setSize(500, 300);
         setLayout(new BorderLayout());
-
+        scoreLabel = new JLabel("Điểm: 0");
+        
         serverRow = new JPanel(new FlowLayout());
         inputRow = new JPanel(new FlowLayout());
 
         add(serverRow, BorderLayout.NORTH);
         add(inputRow, BorderLayout.CENTER);
 
+        // Nút "Check"
         JButton sendButton = new JButton("Check");
         sendButton.addActionListener(e -> sendSortedNumbers());
 
-        add(sendButton, BorderLayout.SOUTH);
+        // Nút "Thoát Game"
+        JButton exitButton = new JButton("Thoát Game");
+        exitButton.addActionListener(e -> exitToNameScreen());
+
+        // Tạo panel chứa các nút
+        JPanel buttonPanel = new JPanel(new FlowLayout());
+        buttonPanel.add(sendButton);
+        buttonPanel.add(exitButton);
+
+        add(scoreLabel, BorderLayout.WEST);  // Hiển thị điểm ở bên trái
+        add(buttonPanel, BorderLayout.SOUTH);
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -56,12 +71,15 @@ public class GameScreen extends JFrame {
         inputRow.removeAll();
         inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
 
-        for (String number : numbers) {
-            // Tạo nhãn cho mỗi số nhận từ server
-            JLabel serverLabel = new JLabel(number.trim());
-            serverRow.add(serverLabel);
+        // Nối các số thành một chuỗi mà không có dấu ngoặc
+        String numbersString = String.join(", ", numbers);
 
-            // Tạo ô nhập liệu để người dùng nhập số đã sắp xếp
+        // Tạo nhãn hiển thị chuỗi số
+        JLabel serverLabel = new JLabel(numbersString);
+        serverRow.add(serverLabel);
+
+        // Thêm các ô nhập liệu tương ứng với mỗi số
+        for (String number : numbers) {
             JTextField inputField = new JTextField(2);
             inputFields.add(inputField);
             inputRow.add(inputField);
@@ -94,4 +112,19 @@ public class GameScreen extends JFrame {
             JOptionPane.showMessageDialog(this, "Vui lòng nhập số hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    // Phương thức để quay về màn hình NameScreen
+    private void exitToNameScreen() {
+        dispose(); // Đóng cửa sổ GameScreen
+        new NameScreen(); // Mở lại màn hình NameScreen
+    }
+    public void updateScore(String score) {
+    SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
+}
+
+public void showResultMessage(String message) {
+    SwingUtilities.invokeLater(() -> {
+        JOptionPane.showMessageDialog(this, message);
+    });
+}
 }

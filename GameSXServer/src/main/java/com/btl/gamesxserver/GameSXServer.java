@@ -44,33 +44,32 @@ public class GameSXServer {
             this.socket = socket;
         }
 
-        
 @Override
 public void run() {
     try {
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(socket.getOutputStream(), true);
 
-       // out.println("Enter username:");
-        username = in.readLine();
+        username = in.readLine(); // Nhận tên người chơi
 
         // Bắt đầu game
         while (true) {
             List<Integer> numbers = generateRandomNumbers();
-            out.println("Sort these numbers: " + numbers);
+            out.println("NUMBERS:" + numbers);  // Thông báo số cần sắp xếp
 
             String sortedNumbers = in.readLine();
             List<Integer> userSorted = parseNumbers(sortedNumbers);
 
             if (isSorted(userSorted, numbers)) {
                 score += 10;
-                out.println("Correct! +10 points.");
+                out.println("SCORE: Correct Answer +10 points");
             } else {
                 score -= 5;
-                out.println("Wrong! -5 points.");
+                out.println("SCORE: Wrong answer -5 points");
             }
 
-            out.println("Your current score: " + score);
+            // Gửi điểm hiện tại cho client
+            out.println("CURRENT_SCORE:" + score);
         }
 
     } catch (IOException e) {
@@ -83,6 +82,7 @@ public void run() {
         }
     }
 }
+
 
     private List<Integer> generateRandomNumbers() {
         Random random = new Random();
@@ -105,16 +105,25 @@ public void run() {
             return numbers;
         }      
 
-    private boolean isSorted(List<Integer> list,List<Integer> ListBanDau) {
-       
-        Collections.sort(ListBanDau);
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) != ListBanDau.get(i )) {
-                    return false;
-                }
-            }
-            return true;
-        }
+    private boolean isSorted(List<Integer> list, List<Integer> originalList) {
+    // Tạo bản sao của danh sách ban đầu để sắp xếp
+    List<Integer> ascendingList = new ArrayList<>(originalList);
+    List<Integer> descendingList = new ArrayList<>(originalList);
+
+    // Sắp xếp bản sao theo thứ tự tăng dần và giảm dần
+    Collections.sort(ascendingList);
+    Collections.sort(descendingList, Collections.reverseOrder());
+
+    // Kiểm tra xem danh sách đầu vào có khớp với bản sao đã sắp xếp không
+    if (list.equals(ascendingList)) {
+        return true;  // Dãy số được sắp xếp tăng dần
+    } else if (list.equals(descendingList)) {
+        return true;  // Dãy số được sắp xếp giảm dần
+    } else {
+        return false; // Dãy số không được sắp xếp
+    }
+}
+
 
     private void broadcast(String message) {
             for (ClientHandler client : clients) {
