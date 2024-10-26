@@ -4,6 +4,6 @@ import javax.swing.*;
 
 public class GameSXClients {
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(NameScreen::new);
+        SwingUtilities.invokeLater(LoginScreen::new);
     }
 }
