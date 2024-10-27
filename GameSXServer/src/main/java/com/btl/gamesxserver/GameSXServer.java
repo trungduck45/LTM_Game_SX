@@ -57,8 +57,10 @@ public class GameSXServer {
                     handleRegister(request);
                 } else if (request.startsWith("LOGIN")) {
                     handleLogin(request);
-                } else if (request.startsWith("CREATE_ROOM")) {
-                    handleCreateRoom(request);
+                } else if (request.startsWith("GET_USER_PROFILE")) {
+                    handleGetUserProfile(request);
+                } else if (request.startsWith("JOIN_ROOM")) {
+                    handleJoinRoom(request);
                 } else {
                     // Handle other requests (e.g., game logic)
                     username = request;
@@ -106,45 +108,94 @@ public class GameSXServer {
                 String password = parts[2];
 
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT password FROM users WHERE username = ?");
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT userid, password, ingame_name FROM users WHERE username = ?");
                     stmt.setString(1, username);
                     ResultSet rs = stmt.executeQuery();
 
                     if (rs.next()) {
                         String storedPassword = rs.getString("password");
+                        String userId = rs.getString("userid");
+                        String ingameName = rs.getString("ingame_name");
                         if (storedPassword.equals(password)) {
-                            out.println("SUCCESS");
+                            out.println("LOGIN_SUCCESS " + userId + " " + ingameName);
                         } else {
-                            out.println("FAIL");
+                            out.println("LOGIN_FAIL");
                         }
                     } else {
-                        out.println("FAIL");
+                        out.println("LOGIN_FAIL");
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
-                    out.println("FAIL");
+                    out.println("LOGIN_FAIL");
                 }
             } else {
-                out.println("FAIL");
+                out.println("LOGIN_FAIL");
             }
         }
 
-        private void handleCreateRoom(String request) {
+        private void handleGetUserProfile(String request) {
             String[] parts = request.split(" ");
             if (parts.length == 2) {
-                int player1Id = Integer.parseInt(parts[1]);
+                String userId = parts[1];
 
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO rooms (player1_id, player2_id) VALUES (?, NULL)");
-                    stmt.setInt(1, player1Id);
-                    stmt.executeUpdate();
-                    out.println("ROOM_CREATED");
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT ingame_name, totalpoint, rankedpoint FROM users WHERE userid = ?");
+                    stmt.setString(1, userId);
+                    ResultSet rs = stmt.executeQuery();
+
+                    if (rs.next()) {
+                        String ingameName = rs.getString("ingame_name");
+                        int totalPoint = rs.getInt("totalpoint");
+                        int rankedPoint = rs.getInt("rankedpoint");
+                        out.println(ingameName + " " + totalPoint + " " + rankedPoint);
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
                 } catch (SQLException e) {
                     e.printStackTrace();
-                    out.println("ROOM_CREATION_FAILED");
+                    out.println("ERROR");
                 }
             } else {
-                out.println("ROOM_CREATION_FAILED");
+                out.println("INVALID_REQUEST");
+            }
+        }
+
+        private void handleJoinRoom (String request) {
+            String[] parts = request.split(" ");
+            if (parts.length == 3) {
+                String roomId = parts[1];
+                String username = parts[2];
+
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT player1_id, player2_id FROM rooms WHERE id = ?");
+                    stmt.setString(1, roomId);
+                    ResultSet rs = stmt.executeQuery();
+
+                    if (rs.next()) {
+                        String player1_id = rs.getString("player1_id");
+                        String player2_id = rs.getString("player2_id");
+                        if (player1_id != null && player2_id != null) {
+                            out.println("ROOM_FULL");
+                        } else if (player1_id == null) {
+                            stmt = dbConnection.prepareStatement("UPDATE rooms SET player1_id = ? WHERE id = ?");
+                            stmt.setString(1, username);
+                            stmt.setString(2, roomId);
+                            stmt.executeUpdate();
+                            out.println("JOIN_SUCCESS");
+                        } else {
+                            stmt = dbConnection.prepareStatement("UPDATE rooms SET player2_id = ? WHERE id = ?");
+                            stmt.setString(1, username);
+                            stmt.setString(2, roomId);
+                            stmt.executeUpdate();
+                            out.println("JOIN_SUCCESS");
+                        }
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("ERROR");
+                }
             }
         }
 

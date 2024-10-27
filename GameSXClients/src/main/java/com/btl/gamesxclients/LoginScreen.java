@@ -86,9 +86,16 @@ public class LoginScreen extends JFrame {
             // Read the server's response
             String response = in.readLine();
 
-            if ("SUCCESS".equals(response)) {
-                new WaitingRoomScreen(username); // Open GameScreen on successful login
-                dispose();  // Close the login screen
+            if (response.startsWith("LOGIN_SUCCESS")) {
+                String[] responseParts = response.split(" ");
+                if (responseParts.length == 3) {
+                    String userId = responseParts[1];
+                    String ingameName = responseParts[2];
+                    new WaitingRoomScreen(username, userId, ingameName); // Pass userId and ingameName to the next screen
+                    dispose();  // Close the login screen
+                } else {
+                    JOptionPane.showMessageDialog(this, "Invalid server response!");
+                }
             } else {
                 JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!");
             }
