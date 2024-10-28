@@ -2,8 +2,15 @@ package com.btl.gamesxclients;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.Socket;
+import java.util.Scanner;
 
 public class WaitingRoomScreen extends JFrame {
+    private String serverAddress = "localhost"; // Ensure this is correct
+    private int serverPort = 12345; // Ensure this is correct
+
     public WaitingRoomScreen(String username, String userId, String ingameName) {
         setTitle("Sảnh chờ");
         setSize(400, 300);
@@ -42,9 +49,13 @@ public class WaitingRoomScreen extends JFrame {
 
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
-        JButton enterGameButton = new JButton("Vào game");
+        JButton enterGameButton = new JButton("Vào phòng");
         enterGameButton.addActionListener(e -> enterGame(userId));
         buttonPanel.add(enterGameButton);
+
+        JButton createRoomButton = new JButton("Tạo phòng");
+        createRoomButton.addActionListener(e -> createRoom(userId));
+        buttonPanel.add(createRoomButton);
 
         // Add panels to the frame
         add(titlePanel, BorderLayout.NORTH);
@@ -61,5 +72,31 @@ public class WaitingRoomScreen extends JFrame {
     private void enterGame(String userId) {
         new JoinRoomScreen(userId); // Open RoomScreen
         dispose();  // Close the waiting room screen
+    }
+
+    private void createRoom(String userId) {
+        try (Socket socket = new Socket(serverAddress, serverPort);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             Scanner in = new Scanner(socket.getInputStream())) {
+
+            // Send create room request to the server
+            out.println("CREATE_ROOM " + userId);
+
+            // Read server response
+            String response = in.nextLine();
+            if (response.startsWith("CREATE_ROOM_SUCCESS")) {
+                if (response.split(" ").length == 2) {
+                    String roomId = response.split(" ")[1];
+                    new CreateRoomScreen(userId, roomId).setVisible(true); // Open CreateRoomScreen
+                } else {
+                    JOptionPane.showMessageDialog(this, "Failed to create room.");
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to create room.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.");
+        }
     }
 }

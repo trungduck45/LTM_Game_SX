@@ -7,8 +7,11 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="GameSXServer" />
-        <module name="jdbc" />
+        <module name="GameSXClients" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="jdbc" target="21" />
+    </bytecodeTargetLevel>
   </component>
 </project>

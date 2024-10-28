@@ -61,6 +61,10 @@ public class GameSXServer {
                     handleGetUserProfile(request);
                 } else if (request.startsWith("JOIN_ROOM")) {
                     handleJoinRoom(request);
+                } else if (request.startsWith("CREATE_ROOM")) {
+                    handleCreateRoom(request);
+                } else if (request.startsWith("DELETE_ROOM")){
+                    handleDeleteRoom(request);
                 } else {
                     // Handle other requests (e.g., game logic)
                     username = request;
@@ -196,6 +200,52 @@ public class GameSXServer {
                     e.printStackTrace();
                     out.println("ERROR");
                 }
+            }
+        }
+
+        private void handleCreateRoom (String request) {
+            String[] parts = request.split(" ");
+            if (parts.length == 2) {
+                String userid = parts[1];
+
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO rooms (player1_id) VALUES (?)");
+                    stmt.setString(1, userid);
+                    stmt.executeUpdate();
+                    PreparedStatement stmt2 = dbConnection.prepareStatement("SELECT id FROM rooms WHERE player1_id = ?");
+                    stmt2.setString(1, userid);
+                    ResultSet rs = stmt2.executeQuery();
+                    if (rs.next()) {
+                        out.println("CREATE_ROOM_SUCCESS " + rs.getString("id"));
+                    } else {
+                        out.println("CREATE_ROOM_FAIL");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("CREATE_ROOM_FAIL");
+                }
+            } else {
+                out.println("CREATE_ROOM_FAIL");
+            }
+        }
+
+        private void handleDeleteRoom (String request) {
+            String[] parts = request.split(" ");
+            if (parts.length == 2) {
+                String userid = parts[1];
+
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("DELETE FROM rooms WHERE player1_id = ? OR player2_id = ?");
+                    stmt.setString(1, userid);
+                    stmt.setString(2, userid);
+                    stmt.executeUpdate();
+                    out.println("DELETE_ROOM_SUCCESS");
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("DELETE_ROOM_FAIL");
+                }
+            } else {
+                out.println("DELETE_ROOM_FAIL");
             }
         }
 
