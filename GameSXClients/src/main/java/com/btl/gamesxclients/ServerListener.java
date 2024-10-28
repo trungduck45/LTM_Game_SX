@@ -27,7 +27,11 @@ public void run() {
             } else if (message.startsWith("NUMBERS:")) {
                 String[] numbers = message.substring(8).split(", ");
                 gameScreen.updateServerNumbers(numbers);  // Hiển thị số cần sắp xếp
+            } else if(message.startsWith("WORD:")){
+                String word = message.substring(5);
+                gameScreen.updateServerWord(word);
             }
+            
         }
     } catch (IOException e) {
         e.printStackTrace();

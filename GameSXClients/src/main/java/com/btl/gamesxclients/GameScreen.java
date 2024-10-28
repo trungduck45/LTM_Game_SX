@@ -47,8 +47,8 @@ public class GameScreen extends JFrame {
 
         // Nút "Check"
         JButton sendButton = new JButton("Check");
-        sendButton.addActionListener(e -> sendSortedNumbers());
-
+        sendButton.addActionListener(e -> sendDataToServer());
+        
         // Nút "Thoát Game"
         JButton exitButton = new JButton("Thoát Game");
         exitButton.addActionListener(e -> exitToNameScreen());
@@ -91,27 +91,58 @@ public class GameScreen extends JFrame {
         inputRow.revalidate();
         inputRow.repaint();
     }
+    
+    public void updateServerWord(String word) {
+        // Xóa các phần tử cũ trước khi thêm mới
+        serverRow.removeAll();
+        inputRow.removeAll();
+        inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
 
-    private void sendSortedNumbers() {
-        try {
-            StringBuilder sortedNumbers = new StringBuilder();
-            for (JTextField field : inputFields) {
-                String text = field.getText().trim();
-                if (text.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ số!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-                sortedNumbers.append(Integer.parseInt(text)).append(",");
-            }
-            // Xóa dấu phẩy cuối cùng
-            if (sortedNumbers.length() > 0) {
-                sortedNumbers.setLength(sortedNumbers.length() - 1);
-            }
-            out.println(sortedNumbers.toString()); // Gửi dãy số đã sắp xếp tới server
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Vui lòng nhập số hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
+      
+        // Tạo nhãn hiển thị 
+        JLabel serverLabel = new JLabel(word);
+        serverRow.add(serverLabel);
+
+        // Thêm các ô nhập liệu tương ứng với mỗi số
+       
+            JTextField inputField = new JTextField(10);
+            inputFields.add(inputField);
+            inputRow.add(inputField);
+    
+
+        // Cập nhật giao diện sau khi thêm các thành phần mới
+        serverRow.revalidate();
+        serverRow.repaint();
+        inputRow.revalidate();
+        inputRow.repaint();
     }
+    private void sendDataToServer() {
+    try {
+        StringBuilder inputData = new StringBuilder();
+        
+        // Lấy dữ liệu từ các ô nhập liệu
+        for (JTextField field : inputFields) {
+            String text = field.getText().trim();
+            if (text.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            inputData.append(text).append(",");
+        }
+
+        // Xóa dấu phẩy cuối cùng
+        if (inputData.length() > 0) {
+            inputData.setLength(inputData.length() - 1);
+        }
+
+        // Gửi dữ liệu tới server
+        out.println(inputData.toString());
+
+    } catch (Exception e) {
+        JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi khi gửi dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
 
     // Phương thức để quay về màn hình NameScreen
     private void exitToNameScreen() {
