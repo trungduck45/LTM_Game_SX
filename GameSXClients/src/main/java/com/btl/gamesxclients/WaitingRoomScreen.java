@@ -49,8 +49,8 @@ public class WaitingRoomScreen extends JFrame {
 
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
-        JButton enterGameButton = new JButton("Vào phòng");
-        enterGameButton.addActionListener(e -> enterGame(userId));
+        JButton enterGameButton = new JButton("Tìm phòng");
+        enterGameButton.addActionListener(e -> joinRoom(userId));
         buttonPanel.add(enterGameButton);
 
         JButton createRoomButton = new JButton("Tạo phòng");
@@ -69,9 +69,8 @@ public class WaitingRoomScreen extends JFrame {
         setVisible(true);
     }
 
-    private void enterGame(String userId) {
-        new JoinRoomScreen(userId); // Open RoomScreen
-        dispose();  // Close the waiting room screen
+    private void joinRoom(String userId) {
+        new JoinRoomScreen(userId).setVisible(true); // Open RoomScreen
     }
 
     private void createRoom(String userId) {

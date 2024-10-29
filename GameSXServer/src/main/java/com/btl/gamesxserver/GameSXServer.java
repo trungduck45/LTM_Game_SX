@@ -63,7 +63,7 @@ public class GameSXServer {
                     handleJoinRoom(request);
                 } else if (request.startsWith("CREATE_ROOM")) {
                     handleCreateRoom(request);
-                } else if (request.startsWith("DELETE_ROOM")){
+                } else if (request.startsWith("DELETE_ROOM")) {
                     handleDeleteRoom(request);
                 } else {
                     // Handle other requests (e.g., game logic)
@@ -166,39 +166,35 @@ public class GameSXServer {
 
         private void handleJoinRoom (String request) {
             String[] parts = request.split(" ");
+
             if (parts.length == 3) {
                 String roomId = parts[1];
-                String username = parts[2];
+                String userId = parts[2];
 
                 try {
                     PreparedStatement stmt = dbConnection.prepareStatement("SELECT player1_id, player2_id FROM rooms WHERE id = ?");
                     stmt.setString(1, roomId);
                     ResultSet rs = stmt.executeQuery();
 
-                    if (rs.next()) {
-                        String player1_id = rs.getString("player1_id");
-                        String player2_id = rs.getString("player2_id");
-                        if (player1_id != null && player2_id != null) {
-                            out.println("ROOM_FULL");
-                        } else if (player1_id == null) {
-                            stmt = dbConnection.prepareStatement("UPDATE rooms SET player1_id = ? WHERE id = ?");
-                            stmt.setString(1, username);
-                            stmt.setString(2, roomId);
-                            stmt.executeUpdate();
+                    if (rs.next()){
+                        String player1Id = rs.getString("player1_id");
+                        String player2Id = rs.getString("player2_id");
+
+                        if (player2Id == null) {
+                            PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE rooms SET player2_id = ? WHERE id = ?");
+                            stmt2.setString(1, userId);
+                            stmt2.setString(2, roomId);
+                            stmt2.executeUpdate();
                             out.println("JOIN_SUCCESS");
                         } else {
-                            stmt = dbConnection.prepareStatement("UPDATE rooms SET player2_id = ? WHERE id = ?");
-                            stmt.setString(1, username);
-                            stmt.setString(2, roomId);
-                            stmt.executeUpdate();
-                            out.println("JOIN_SUCCESS");
+                            out.println("ROOM_FULL");
                         }
                     } else {
-                        out.println("USER_NOT_FOUND");
+                        out.println("JOIN_FAIL");
                     }
                 } catch (SQLException e) {
                     e.printStackTrace();
-                    out.println("ERROR");
+                    out.println("ROOM_NOT_FOUND");
                 }
             }
         }
