@@ -44,45 +44,58 @@ private int remainingTime; // Thời gian còn lại (tính bằng giây)
     }
 
     private void initGameUI() {
-        setTitle("Trò chơi sắp xếp");
-        setSize(500, 300);
-        setLayout(new BorderLayout());
+    setTitle("Trò chơi sắp xếp");
+    setSize(500, 300);
+    setLayout(new BorderLayout());
 
-        // Khởi tạo các nhãn thời gian và điểm số
-        timerLabel = new JLabel("Thời gian: 20s");
-        scoreLabel = new JLabel("Điểm: 0");
+    // Khởi tạo các nhãn thời gian và điểm số với căn giữa
+    timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
+    scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
 
-        // Tạo panel cho thời gian và điểm
-        JPanel infoPanel = new JPanel(new GridLayout(2, 1));
-        infoPanel.add(timerLabel);  // Thêm nhãn thời gian
-        infoPanel.add(scoreLabel);  // Thêm nhãn điểm
+    // Khởi tạo các dòng với FlowLayout căn giữa
+    serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    serverRow.add(new JLabel("Server Row"));  // Ví dụ cho nội dung serverRow
 
-        add(infoPanel, BorderLayout.WEST); // Hiển thị ở bên trái
+    inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    inputRow.add(new JLabel("Input Row"));  // Ví dụ cho nội dung inputRow
 
-        // Khởi tạo các phần khác của giao diện
-        serverRow = new JPanel(new FlowLayout());
-        inputRow = new JPanel(new FlowLayout());
+    JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    timerPanel.add(timerLabel);  // Chứa nhãn thời gian
 
-        add(serverRow, BorderLayout.NORTH);
-        add(inputRow, BorderLayout.CENTER);
+    JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    scorePanel.add(scoreLabel);  // Chứa nhãn điểm số
 
-        // Nút "Check"
-        JButton sendButton = new JButton("Check");
-        sendButton.addActionListener(e -> sendDataToServer());
+    // Tạo một panel chính với BoxLayout theo chiều dọc
+    JPanel mainPanel = new JPanel();
+    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-        // Nút "Thoát Game"
-        JButton exitButton = new JButton("Thoát Game");
-        exitButton.addActionListener(e -> exitToNameScreen());
+    // Thêm các dòng vào panel chính
+    mainPanel.add(serverRow);
+    mainPanel.add(inputRow);
+    mainPanel.add(timerPanel);
+    mainPanel.add(scorePanel);
 
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        buttonPanel.add(sendButton);
-        buttonPanel.add(exitButton);
+    // Căn giữa panel chính trong cửa sổ
+    add(mainPanel, BorderLayout.CENTER);
 
-        add(buttonPanel, BorderLayout.SOUTH);
+    // Nút "Check"
+    JButton sendButton = new JButton("Check");
+    sendButton.addActionListener(e -> sendDataToServer());
 
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
-    }
+    // Nút "Thoát Game"
+    JButton exitButton = new JButton("Thoát Game");
+    exitButton.addActionListener(e -> exitToNameScreen());
+
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+    buttonPanel.add(sendButton);
+    buttonPanel.add(exitButton);
+
+    add(buttonPanel, BorderLayout.SOUTH);  // Thêm nút ở dưới cùng
+
+    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    setVisible(true);
+}
+
 
 
     public void updateServerNumbers(String[] numbers) {
@@ -180,7 +193,7 @@ private int remainingTime; // Thời gian còn lại (tính bằng giây)
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
 
-        remainingTime = 20; // Thời gian đếm ngược 15 giây
+        remainingTime = 21; // Thời gian đếm ngược 
         timerLabel.setText("Thời gian: " + remainingTime + "s"); // Cập nhật nhãn thời gian
 
         timer = new Timer();
