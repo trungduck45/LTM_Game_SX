@@ -4,7 +4,10 @@ import java.net.*;
 import java.io.*;
 import java.sql.*;
 import java.util.*;
-
+/**
+ *
+ * @author letru
+ */
 public class GameSXServer {
 
     private static final int PORT = 12345;
@@ -36,11 +39,14 @@ public class GameSXServer {
     }
 
     static class ClientHandler extends Thread {
-        private Socket socket;
+        private final Socket socket;
         private BufferedReader in;
         private PrintWriter out;
         private String username;
         private int score = 0;
+
+        // Danh sách các từ để chơi
+        private static final List<String> WORDS = Arrays.asList("apple", "banana", "orange", "grape", "mango");
 
         public ClientHandler(Socket socket) {
             this.socket = socket;
@@ -166,7 +172,16 @@ public class GameSXServer {
 
         private void handleJoinRoom (String request) {
             String[] parts = request.split(" ");
+                username = in.readLine(); // Nhận tên người chơi
 
+                // Bắt đầu game
+                while (true) {
+                    // Quyết định ngẫu nhiên giữa dãy số và từ
+                    if (new Random().nextBoolean()) {
+                        playNumberGame();
+                    } else {
+                        playWordGame();
+                    }
             if (parts.length == 3) {
                 String roomId = parts[1];
                 String userId = parts[2];
@@ -262,7 +277,49 @@ public class GameSXServer {
                     out.println("Wrong! -5 points.");
                 }
 
-                out.println("Your current score: " + score);
+                    // Gửi điểm hiện tại cho client
+                    out.println("CURRENT_SCORE:" + score);
+                }
+
+            } catch (IOException e) {
+                System.out.println("Client disconnected: " + socket.getInetAddress());
+            } finally {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        private void playNumberGame() throws IOException {
+            List<Integer> numbers = generateRandomNumbers();
+            out.println("NUMBERS:" + numbers);  // Gửi dãy số cho client
+
+            String sortedNumbers = in.readLine();  // Nhận dãy đã sắp xếp từ client
+            List<Integer> userSorted = parseNumbers(sortedNumbers);
+
+            if (isSorted(userSorted, numbers)) {
+                score += 10;
+                out.println("SCORE: Correct Answer +10 points");
+            } else {
+                score -= 5;
+                out.println("SCORE: Wrong Answer -5 points");
+            }
+        }
+
+        private void playWordGame() throws IOException {
+            String word = WORDS.get(new Random().nextInt(WORDS.size())); // Chọn từ ngẫu nhiên
+            String shuffledWord = shuffleWord(word); // Đảo vị trí từ
+            out.println("WORD:" + shuffledWord);  // Gửi từ bị đảo cho client
+
+            String userAnswer = in.readLine();  // Nhận từ đã sắp xếp từ client
+            if (word.equals(userAnswer)) {
+                score += 10;
+                out.println("SCORE: Correct Answer +10 points");
+            } else {
+                score -= 5;
+                out.println("SCORE: Wrong answer -5 points");
             }
         }
 
@@ -280,28 +337,46 @@ public class GameSXServer {
 
         private List<Integer> parseNumbers(String input) {
             List<Integer> numbers = new ArrayList<>();
-            String[] parts = input.split(",");
-            for (String part : parts) {
-                numbers.add(Integer.parseInt(part.trim()));
+            try {
+                String[] parts = input.split(",");
+                for (String part : parts) {
+                    numbers.add(Integer.parseInt(part.trim()));
+                }
+            } catch (NumberFormatException e) {
+                out.println("ERROR: Invalid input. Please enter numbers separated by commas.");
             }
             return numbers;
         }
 
-        private boolean isSorted(List<Integer> list, List<Integer> ListBanDau) {
-            Collections.sort(ListBanDau);
-            for (int i = 0; i < list.size(); i++) {
-                if (!list.get(i).equals(ListBanDau.get(i))) {
-                    return false;
-                }
-            }
-            return true;
+        private boolean isSorted(List<Integer> list, List<Integer> originalList) {
+            // Tạo bản sao của danh sách ban đầu để sắp xếp
+            List<Integer> ascendingList = new ArrayList<>(originalList);
+            List<Integer> descendingList = new ArrayList<>(originalList);
+
+            // Sắp xếp bản sao theo thứ tự tăng dần và giảm dần
+            Collections.sort(ascendingList);
+            Collections.sort(descendingList, Collections.reverseOrder());
+
+            // Kiểm tra xem danh sách đầu vào có khớp với bản sao đã sắp xếp không
+            return list.equals(ascendingList) || list.equals(descendingList);
         }
+
+        private String shuffleWord(String word) {
+            List<Character> characters = new ArrayList<>();
+            for (char c : word.toCharArray()) {
+                characters.add(c);
+            }
+            Collections.shuffle(characters);
 
         private void broadcast(String message) {
             System.out.println("Broadcasting message: " + message);
             for (ClientHandler client : clients) {
                 client.out.println(message);
+            StringBuilder shuffledWord = new StringBuilder();
+            for (char c : characters) {
+                shuffledWord.append(c);
             }
+            return shuffledWord.toString();
         }
     }
 }
