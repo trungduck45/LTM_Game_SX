@@ -18,13 +18,16 @@ public class GameScreen extends JFrame {
     private BufferedReader in;
     
     private JLabel scoreLabel; 
+    private int scoreSum = 0;
     
     private Timer timer; // Bộ đếm thời gian
     
     private JLabel timerLabel; // Hiển thị thời gian đếm ngược
-private int remainingTime; // Thời gian còn lại (tính bằng giây)
-
-
+    private int remainingTime; // Thời gian còn lại (tính bằng giây)
+    
+    private JLabel currentLevel ;  // Màn hiện tại
+    private int currentLevelValue=1;
+    private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
     public GameScreen(String serverAddress, String playerName) {
         try {
@@ -42,59 +45,71 @@ private int remainingTime; // Thời gian còn lại (tính bằng giây)
             System.exit(0);
         }
     }
+ private void initGameUI() {
+        setTitle("Trò chơi sắp xếp");
+        setSize(500, 300);
+        setLayout(new BorderLayout());
 
-    private void initGameUI() {
-    setTitle("Trò chơi sắp xếp");
-    setSize(500, 300);
-    setLayout(new BorderLayout());
+        currentLevel = new JLabel("Màn " + currentLevelValue, SwingConstants.CENTER);
+        timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
+        scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
 
-    // Khởi tạo các nhãn thời gian và điểm số với căn giữa
-    timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
-    scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
+        serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        serverRow.add(new JLabel("Server Row"));
 
-    // Khởi tạo các dòng với FlowLayout căn giữa
-    serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    serverRow.add(new JLabel("Server Row"));  // Ví dụ cho nội dung serverRow
+        inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        inputRow.add(new JLabel("Input Row"));
 
-    inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    inputRow.add(new JLabel("Input Row"));  // Ví dụ cho nội dung inputRow
+        JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        timerPanel.add(timerLabel);
 
-    JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    timerPanel.add(timerLabel);  // Chứa nhãn thời gian
+        JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        scorePanel.add(scoreLabel);
 
-    JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    scorePanel.add(scoreLabel);  // Chứa nhãn điểm số
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
 
-    // Tạo một panel chính với BoxLayout theo chiều dọc
-    JPanel mainPanel = new JPanel();
-    mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.add(currentLevel);
+        mainPanel.add(serverRow);
+        mainPanel.add(inputRow);
+        mainPanel.add(timerPanel);
+        mainPanel.add(scorePanel);
 
-    // Thêm các dòng vào panel chính
-    mainPanel.add(serverRow);
-    mainPanel.add(inputRow);
-    mainPanel.add(timerPanel);
-    mainPanel.add(scorePanel);
+        add(mainPanel, BorderLayout.CENTER);
 
-    // Căn giữa panel chính trong cửa sổ
-    add(mainPanel, BorderLayout.CENTER);
+        JButton sendButton = new JButton("Check");
+        sendButton.addActionListener(e -> sendDataToServer());
 
-    // Nút "Check"
-    JButton sendButton = new JButton("Check");
-    sendButton.addActionListener(e -> sendDataToServer());
+        JButton exitButton = new JButton("Thoát Game");
+        exitButton.addActionListener(e -> exitToNameScreen());
 
-    // Nút "Thoát Game"
-    JButton exitButton = new JButton("Thoát Game");
-    exitButton.addActionListener(e -> exitToNameScreen());
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(sendButton);
+        buttonPanel.add(exitButton);
 
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-    buttonPanel.add(sendButton);
-    buttonPanel.add(exitButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+        
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
 
-    add(buttonPanel, BorderLayout.SOUTH);  // Thêm nút ở dưới cùng
+    private void increaseLevel() {
+        if (currentLevelValue < MAX_LEVELS) {
+            currentLevelValue++;
+            currentLevel.setText("Màn " + currentLevelValue);
+        } else {
+            
+            JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            scorePanel.add(scoreLabel);
+            // Hiển thị thông báo số điểm và thoát game
+            
+            String message = "Bạn đã hoàn thành tất cả các màn chơi!\nĐiểm của bạn: " + scoreSum ; // Giả định bạn có phương thức getScore() trả về điểm
+            JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
 
-    setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    setVisible(true);
-}
+            // Gọi hàm thoát về trang namescreen
+            exitToNameScreen();
+        }
+    }
 
 
 
@@ -154,9 +169,10 @@ private int remainingTime; // Thời gian còn lại (tính bằng giây)
         startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
     private void sendDataToServer() {
-            if (timer != null) {
+        if (timer != null) {
             timer.cancel(); // Hủy bộ đếm khi người dùng nhấn Check
         }
+            
         try {
             StringBuilder inputData = new StringBuilder();
 
@@ -185,6 +201,7 @@ private int remainingTime; // Thời gian còn lại (tính bằng giây)
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi khi gửi dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+         increaseLevel(); 
     }
 
     
@@ -224,6 +241,7 @@ private int remainingTime; // Thời gian còn lại (tính bằng giây)
     }
 public void updateScore(String score) {
         SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
+        scoreSum = Integer.parseInt(score);
     }
 
     
