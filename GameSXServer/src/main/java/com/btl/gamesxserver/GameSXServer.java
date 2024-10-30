@@ -186,6 +186,7 @@ public class GameSXServer {
                             stmt2.setString(2, roomId);
                             stmt2.executeUpdate();
                             out.println("JOIN_SUCCESS");
+                            broadcast("PLAYER_JOIN");
                         } else {
                             out.println("ROOM_FULL");
                         }
@@ -297,6 +298,7 @@ public class GameSXServer {
         }
 
         private void broadcast(String message) {
+            System.out.println("Broadcasting message: " + message);
             for (ClientHandler client : clients) {
                 client.out.println(message);
             }

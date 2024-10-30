@@ -2,6 +2,7 @@ package com.btl.gamesxclients;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -10,6 +11,9 @@ import java.util.Scanner;
 public class CreateRoomScreen extends JFrame {
     private final String userId;
     private final String roomId;
+    private Socket socket;
+    private PrintWriter out;
+    private Scanner in;
 
     public CreateRoomScreen(String userId, String roomId) {
         this.userId = userId;
@@ -38,11 +42,44 @@ public class CreateRoomScreen extends JFrame {
         add(roomIdLabel, BorderLayout.CENTER);
         add(exitButton, BorderLayout.SOUTH);
 
+        initializeServerConnection();
+
         // Add action listener to the button
         exitButton.addActionListener(e -> {
             deleteRoom();
             dispose();
         });
+
+        // Initialize server connection and start listening for events
+        startListeningForEvents();
+    }
+
+    private void initializeServerConnection() {
+        try {
+            socket = new Socket("localhost", 12345);
+            out = new PrintWriter(socket.getOutputStream(), true);
+            in = new Scanner(socket.getInputStream());
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.");
+        }
+    }
+
+    private void startListeningForEvents() {
+        new Thread(() -> {
+            while (true) {
+                if (in.hasNextLine()) {
+                    String response = in.nextLine();
+                    if ("PLAYER_JOIN".equals(response)) {
+                        SwingUtilities.invokeLater(() -> {
+                            new GameScreen("localhost", userId).setVisible(true);
+                            dispose();
+                        });
+                        break;
+                    }
+                }
+            }
+        }).start();
     }
 
     private void deleteRoom() {
