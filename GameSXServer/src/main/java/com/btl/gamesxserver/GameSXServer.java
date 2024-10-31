@@ -17,7 +17,7 @@ public class GameSXServer {
     public static void main(String[] args) {
         try {
             // Initialize database connection
-            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "dong1808");
+            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "letrungduc45");
 
             try (ServerSocket serverSocket = new ServerSocket(PORT)) {
                 System.out.println("Server is running...");
@@ -170,50 +170,40 @@ public class GameSXServer {
             }
         }
 
-        private void handleJoinRoom (String request) throws IOException {
+        private void handleJoinRoom (String request) {
             String[] parts = request.split(" ");
-                //username = in.readLine(); // Nhận tên người chơi
 
-                // Bắt đầu game
-                while (true) {
-                    // Quyết định ngẫu nhiên giữa dãy số và từ
-                    if (new Random().nextBoolean()) {
-                         playNumberGame();
-                    } else {
-                        playWordGame();
-                    }
-                    if (parts.length == 3) {
-                        String roomId = parts[1];
-                        String userId = parts[2];
+            if (parts.length == 3) {
+                String roomId = parts[1];
+                String userId = parts[2];
 
-                        try {
-                            PreparedStatement stmt = dbConnection.prepareStatement("SELECT player1_id, player2_id FROM rooms WHERE id = ?");
-                            stmt.setString(1, roomId);
-                            ResultSet rs = stmt.executeQuery();
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT player1_id, player2_id FROM rooms WHERE id = ?");
+                    stmt.setString(1, roomId);
+                    ResultSet rs = stmt.executeQuery();
 
-                            if (rs.next()){
-                                String player1Id = rs.getString("player1_id");
-                                String player2Id = rs.getString("player2_id");
+                    if (rs.next()){
+                        String player1Id = rs.getString("player1_id");
+                        String player2Id = rs.getString("player2_id");
 
-                                if (player2Id == null) {
-                                    PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE rooms SET player2_id = ? WHERE id = ?");
-                                    stmt2.setString(1, userId);
-                                    stmt2.setString(2, roomId);
-                                    stmt2.executeUpdate();
-                                    out.println("JOIN_SUCCESS");
-                                    broadcast("PLAYER_JOIN");
-                                } else {
-                                    out.println("ROOM_FULL");
-                                }
-                            } else {
-                                out.println("JOIN_FAIL");
-                            }
-                        } catch (SQLException e) {
-                            e.printStackTrace();
-                            out.println("ROOM_NOT_FOUND");
+                        if (player2Id == null) {
+                            PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE rooms SET player2_id = ? WHERE id = ?");
+                            stmt2.setString(1, userId);
+                            stmt2.setString(2, roomId);
+                            stmt2.executeUpdate();
+                            out.println("JOIN_SUCCESS");
+                            broadcast("PLAYER_JOIN");
+                        } else {
+                            out.println("ROOM_FULL");
                         }
+                    } else {
+                        out.println("JOIN_FAIL");
                     }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("ROOM_NOT_FOUND");
                 }
+            }
         }
 
         private void handleCreateRoom (String request) {
@@ -265,22 +255,14 @@ public class GameSXServer {
         private void startGame() throws IOException {
             try {
                 while (true) {
-                    List<Integer> numbers = generateRandomNumbers();
-                    out.println("Sort these numbers: " + numbers);
-
-                    String sortedNumbers = in.readLine();
-                    List<Integer> userSorted = parseNumbers(sortedNumbers);
-
-                    if (isSorted(userSorted, numbers)) {
-                        score += 10;
-                        out.println("Correct! +10 points.");
+                     // Quyết định ngẫu nhiên giữa dãy số và từ
+                    if (new Random().nextBoolean()) {
+                        playNumberGame();
                     } else {
-                        score -= 5;
-                        out.println("Wrong! -5 points.");
+                        playWordGame();
                     }
-
-                        // Gửi điểm hiện tại cho client
-                        out.println("CURRENT_SCORE:" + score);
+                    // Gửi điểm hiện tại cho client
+                    out.println("CURRENT_SCORE:" + score);
                     }
             } catch (IOException e) {
                 System.out.println("Client disconnected: " + socket.getInetAddress());
@@ -380,11 +362,6 @@ public class GameSXServer {
             System.out.println("Broadcasting message: " + message);
             for (ClientHandler client : clients) {
                 client.out.println(message);
-//            StringBuilder shuffledWord = new StringBuilder();
-//            for (char c : characters) {
-//                shuffledWord.append(c);
-//            }
-//            return shuffledWord.toString();
             }
         }
     }
