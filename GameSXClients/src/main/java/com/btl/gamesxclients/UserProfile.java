@@ -5,12 +5,14 @@ public class UserProfile {
     private String ingameName;
     private int totalPoint;
     private int rankedPoint;
+    private String status;
 
     // Constructor, getters, and setters
-    public UserProfile(String userId, String ingameName, int totalPoint, int rankedPoint) {
+    public UserProfile(String userId, String ingameName, int totalPoint, int rankedPoint, String status) {
         this.ingameName = ingameName;
         this.totalPoint = totalPoint;
         this.rankedPoint = rankedPoint;
+        this.status = status;
     }
 
     public String getUserId() {
@@ -27,5 +29,8 @@ public class UserProfile {
 
     public int getRankedPoint() {
         return rankedPoint;
+    }
+    public String getStatus(){
+        return status;
     }
 }

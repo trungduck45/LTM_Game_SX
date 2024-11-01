@@ -71,6 +71,8 @@ public class GameSXServer {
                     handleCreateRoom(request);
                 } else if (request.startsWith("DELETE_ROOM")) {
                     handleDeleteRoom(request);
+                } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
+                    handleGetAllUsers();
                 } else {
                     // Handle other requests (e.g., game logic)
                     username = request;
@@ -94,12 +96,17 @@ public class GameSXServer {
                 String username = parts[1];
                 String password = parts[2];
                 String ingameName = parts[3];
-
+                int totalpoint = 0;
+                int rankedpoint = 0;
+                String status = "offline";
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO users (username, password, ingame_name) VALUES (?, ?, ?)");
+                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO users (username, password, ingame_name, totalpoint, rankedpoint, status) VALUES (?, ?, ?, ?, ?, ?)");
                     stmt.setString(1, username);
                     stmt.setString(2, password);
                     stmt.setString(3, ingameName);
+                    stmt.setInt(4, totalpoint);
+                    stmt.setInt(5, rankedpoint);
+                    stmt.setString(6, status);
                     stmt.executeUpdate();
                     out.println("REGISTER_SUCCESS");
                 } catch (SQLException e) {
@@ -149,7 +156,7 @@ public class GameSXServer {
                 String userId = parts[1];
 
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT ingame_name, totalpoint, rankedpoint FROM users WHERE userid = ?");
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT ingame_name, totalpoint, rankedpoint, status FROM users WHERE userid = ?");
                     stmt.setString(1, userId);
                     ResultSet rs = stmt.executeQuery();
 
@@ -157,7 +164,8 @@ public class GameSXServer {
                         String ingameName = rs.getString("ingame_name");
                         int totalPoint = rs.getInt("totalpoint");
                         int rankedPoint = rs.getInt("rankedpoint");
-                        out.println(ingameName + " " + totalPoint + " " + rankedPoint);
+                        String status = rs.getString("status");
+                        out.println(ingameName + " " + totalPoint + " " + rankedPoint + " "+ status);
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
@@ -249,6 +257,33 @@ public class GameSXServer {
                 }
             } else {
                 out.println("DELETE_ROOM_FAIL");
+            }
+        }
+        private void handleGetAllUsers() {
+            try {
+                // Truy vấn để lấy tất cả người dùng
+                PreparedStatement stmt = dbConnection.prepareStatement("SELECT userId, ingame_name, totalpoint, rankedpoint, status FROM users");
+                ResultSet rs = stmt.executeQuery();
+
+                // Gửi từng người chơi cho client, mỗi người chơi một dòng
+                while (rs.next()) {
+                    String userId = rs.getString("userId");
+                    String ingameName = rs.getString("ingame_name");
+                    int totalPoint = rs.getInt("totalpoint");
+                    int rankedPoint = rs.getInt("rankedpoint");
+                    String status = rs.getString("status");
+
+                    // Định dạng và gửi thông tin của từng người chơi
+                    out.println(userId + " " + ingameName + " " + totalPoint + " " + rankedPoint + " " + status);
+                }
+                // Gửi "END" để báo hiệu kết thúc danh sách
+                out.println("END");
+
+                rs.close();
+                stmt.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                out.println("GET_ALL_USERS_FAIL");
             }
         }
 

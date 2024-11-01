@@ -13,6 +13,7 @@ public class RegisterScreen extends JFrame {
     private JTextField ingameNameField;
     private JButton registerButton;
     private JLabel successLabel;
+    private JButton closeButton;
 
     public RegisterScreen() {
         setTitle("Register");
@@ -29,6 +30,7 @@ public class RegisterScreen extends JFrame {
         passwordField = new JPasswordField(15);
         ingameNameField = new JTextField(15);
         registerButton = new JButton("Register");
+        closeButton = new JButton("Đóng");
         successLabel = new JLabel("");
 
         gbc.gridx = 0;
@@ -55,9 +57,13 @@ public class RegisterScreen extends JFrame {
         gbc.gridx = 1;
         gbc.gridy = 3;
         panel.add(registerButton, gbc);
-
+        
         gbc.gridx = 1;
         gbc.gridy = 4;
+        panel.add(closeButton, gbc);
+
+        gbc.gridx = 1;
+        gbc.gridy = 5;
         panel.add(successLabel, gbc);
 
         add(panel);
@@ -67,10 +73,19 @@ public class RegisterScreen extends JFrame {
                 register();
             }
         });
+        closeButton.addActionListener(new ActionListener(){
+            public void actionPerformed(ActionEvent e) {
+                exit();
+            }
+        });
 
         setVisible(true);
     }
 
+    private void exit(){
+        dispose();
+    }
+    
     private void register() {
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());

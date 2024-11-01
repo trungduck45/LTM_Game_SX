@@ -39,13 +39,13 @@ public class WaitingRoomScreen extends JFrame {
         totalPointLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         totalPointLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-        JLabel rankedPointLabel = new JLabel("Ranked Point: " + userProfile.getRankedPoint());
-        rankedPointLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        rankedPointLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+//        JLabel rankedPointLabel = new JLabel("Ranked Point: " + userProfile.getRankedPoint());
+//        rankedPointLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+//        rankedPointLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
         profilePanel.add(ingameNameLabel);
         profilePanel.add(totalPointLabel);
-        profilePanel.add(rankedPointLabel);
+//        profilePanel.add(rankedPointLabel);
 
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
@@ -56,7 +56,11 @@ public class WaitingRoomScreen extends JFrame {
         JButton createRoomButton = new JButton("Tạo phòng");
         createRoomButton.addActionListener(e -> createRoom(userId));
         buttonPanel.add(createRoomButton);
-
+        
+        JButton playerlistButton = new JButton("Danh sách người chơi");
+        playerlistButton.addActionListener(e -> playerList());
+        buttonPanel.add(playerlistButton);
+        
         // Add panels to the frame
         add(titlePanel, BorderLayout.NORTH);
         add(profilePanel, BorderLayout.CENTER);
@@ -71,6 +75,9 @@ public class WaitingRoomScreen extends JFrame {
 
     private void joinRoom(String userId) {
         new JoinRoomScreen(userId).setVisible(true); // Open RoomScreen
+    }
+    private void playerList(){
+        new PlayerListScreen();
     }
 
     private void createRoom(String userId) {
