@@ -20,7 +20,7 @@ public class EndGameScreen extends JFrame {
 
         // Nút thoát game
         JButton exitButton = new JButton("Thoát Game");
-        exitButton.addActionListener(e -> System.exit(0)); // Thoát ứng dụng
+        exitButton.addActionListener(e -> exit()); // Thoát ứng dụng
 
         // Panel hiển thị
         JPanel infoPanel = new JPanel();
@@ -34,5 +34,10 @@ public class EndGameScreen extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Hiển thị ở giữa màn hình
+    }
+    private void exit() {
+         
+        dispose(); 
+       
     }
 }
