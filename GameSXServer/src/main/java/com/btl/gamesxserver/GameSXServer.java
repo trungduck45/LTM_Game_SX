@@ -254,7 +254,9 @@ public class GameSXServer {
 
         private void startGame() throws IOException {
             try {
-                while (true) {
+                int i=0;
+                while( i<10){
+                //while (true) {
                      // Quyết định ngẫu nhiên giữa dãy số và từ
                     if (new Random().nextBoolean()) {
                         playNumberGame();
@@ -263,7 +265,8 @@ public class GameSXServer {
                     }
                     // Gửi điểm hiện tại cho client
                     out.println("CURRENT_SCORE:" + score);
-                    }
+                i++;
+                }
             } catch (IOException e) {
                 System.out.println("Client disconnected: " + socket.getInetAddress());
             } finally {

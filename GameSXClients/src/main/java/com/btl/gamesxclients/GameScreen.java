@@ -108,21 +108,18 @@ public class GameScreen extends JFrame {
     }
 
     private void increaseLevel() {
-        if (currentLevelValue < MAX_LEVELS) {
-            currentLevelValue++;
-            currentLevel.setText("Màn " + currentLevelValue);
-        } else {
-            
-            JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-            scorePanel.add(scoreLabel);
-            // Hiển thị thông báo số điểm và thoát game
-            
-            String message = "Bạn đã hoàn thành tất cả các màn chơi!\nĐiểm của bạn: " + scoreSum ; // Giả định bạn có phương thức getScore() trả về điểm
-            JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+    if (currentLevelValue < MAX_LEVELS) {
+        currentLevelValue++;
+        currentLevel.setText("Màn " + currentLevelValue);
+    } else {
+        goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
+    }
+}
 
-            // Gọi hàm thoát về trang namescreen
-            exitToNameScreen();
-        }
+    private void goToEndGameScreen() {
+        dispose(); // Đóng cửa sổ GameScreen hiện tại
+        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText(), scoreSum);
+        endGameScreen.setVisible(true);
     }
 
 
