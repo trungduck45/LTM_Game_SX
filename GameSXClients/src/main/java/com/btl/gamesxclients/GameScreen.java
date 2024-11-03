@@ -25,10 +25,10 @@ public class GameScreen extends JFrame {
     private JLabel timerLabel; // Hiển thị thời gian đếm ngược
     private int remainingTime; // Thời gian còn lại (tính bằng giây)
 
-    private JLabel currentLevel ;  // Màn hiện tại
+    private JLabel currentLevel;  // Màn hiện tại
     private JLabel ingameNameLabel;
 
-    private int currentLevelValue=1;
+    private int currentLevelValue = 1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
     public GameScreen(String serverAddress, String userId) {
@@ -39,7 +39,6 @@ public class GameScreen extends JFrame {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             out.println(userId); // Gửi tên người chơi tới server
-
 
 
             initGameUI(userId);
@@ -118,7 +117,7 @@ public class GameScreen extends JFrame {
 ////    }
 //}
 
- private void initGameUI() {
+    private void initGameUI() {
         setTitle("Trò chơi sắp xếp");
         setSize(500, 300);
         setLayout(new BorderLayout());
@@ -176,7 +175,7 @@ public class GameScreen extends JFrame {
             scorePanel.add(scoreLabel);
             // Hiển thị thông báo số điểm và thoát game
 
-            String message = "Bạn đã hoàn thành tất cả các màn chơi!\nĐiểm của bạn: " + scoreSum ; // Giả định bạn có phương thức getScore() trả về điểm
+            String message = "Bạn đã hoàn thành tất cả các màn chơi!\nĐiểm của bạn: " + scoreSum; // Giả định bạn có phương thức getScore() trả về điểm
             JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
 
             // Gọi hàm thoát về trang namescreen
@@ -190,7 +189,6 @@ public class GameScreen extends JFrame {
         EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText(), scoreSum);
         endGameScreen.setVisible(true);
     }
-
 
 
     public void updateServerNumbers(String[] numbers) {
@@ -219,7 +217,7 @@ public class GameScreen extends JFrame {
         inputRow.revalidate();
         inputRow.repaint();
 
-          startTimer(); // Khởi động lại bộ đếm khi có câu mới
+        startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
 
     public void updateServerWord(String word) {
@@ -235,9 +233,9 @@ public class GameScreen extends JFrame {
 
         // Thêm các ô nhập liệu tương ứng với mỗi số
 
-            JTextField inputField = new JTextField(10);
-            inputFields.add(inputField);
-            inputRow.add(inputField);
+        JTextField inputField = new JTextField(10);
+        inputFields.add(inputField);
+        inputRow.add(inputField);
 
 
         // Cập nhật giao diện sau khi thêm các thành phần mới
@@ -248,6 +246,7 @@ public class GameScreen extends JFrame {
 
         startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
+
     private void sendDataToServer() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm khi người dùng nhấn Check
@@ -260,8 +259,8 @@ public class GameScreen extends JFrame {
             for (JTextField field : inputFields) {
 
                 String text = field.getText().trim();
-                if(text.length() < 1){
-                    text= "0";
+                if (text.length() < 1) {
+                    text = "0";
                 }
                 if (text.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -281,7 +280,7 @@ public class GameScreen extends JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi khi gửi dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-         increaseLevel();
+        increaseLevel();
     }
 
 
@@ -313,39 +312,40 @@ public class GameScreen extends JFrame {
 
     // Phương thức để quay về màn hình NameScreen
     private void exitToNameScreen() {
-         if (timer != null) {
+        if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
         dispose(); // Đóng cửa sổ GameScreen
-       // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
+        // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
-public void updateScore(String score) {
+
+    public void updateScore(String score) {
         SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
         scoreSum = Integer.parseInt(score);
     }
 
 
-public void showResultMessage(String message) {
-    SwingUtilities.invokeLater(() -> {
-        // Tạo JDialog để hiển thị thông báo
-        JDialog dialog = new JDialog(this, "Thông báo", true);
-        dialog.setLayout(new BorderLayout());
-        dialog.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
-        dialog.setSize(300, 100); // Kích thước hộp thoại
-        dialog.setLocationRelativeTo(this); // Căn giữa so với cửa sổ chính
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    public void showResultMessage(String message) {
+        SwingUtilities.invokeLater(() -> {
+            // Tạo JDialog để hiển thị thông báo
+            JDialog dialog = new JDialog(this, "Thông báo", true);
+            dialog.setLayout(new BorderLayout());
+            dialog.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
+            dialog.setSize(300, 100); // Kích thước hộp thoại
+            dialog.setLocationRelativeTo(this); // Căn giữa so với cửa sổ chính
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
-        // Sử dụng java.util.Timer để đóng JDialog sau 1 giây
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(dialog::dispose); // Đóng hộp thoại trên Swing EDT
-            }
-        }, 1000); // 1000ms = 1 giây
+            // Sử dụng java.util.Timer để đóng JDialog sau 1 giây
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    SwingUtilities.invokeLater(dialog::dispose); // Đóng hộp thoại trên Swing EDT
+                }
+            }, 1000); // 1000ms = 1 giây
 
-        // Hiển thị hộp thoại
-        dialog.setVisible(true);
-    });
-}
+            // Hiển thị hộp thoại
+            dialog.setVisible(true);
+        });
+    }
 }
