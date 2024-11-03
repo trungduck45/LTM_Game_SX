@@ -96,7 +96,10 @@ public class LoginScreen extends JFrame {
                 } else {
                     JOptionPane.showMessageDialog(this, "Invalid server response!");
                 }
-            } else {
+            } else if (response.equals("LOGIN_FAIL_2")) {
+                JOptionPane.showMessageDialog(this, "Tài khoản đang được đăng nhập ở nơi khác!");
+            }
+            else {
                 JOptionPane.showMessageDialog(this, "Sai tài khoản hoặc mật khẩu!");
             }
 

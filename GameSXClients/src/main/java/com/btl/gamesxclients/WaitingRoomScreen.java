@@ -13,7 +13,7 @@ public class WaitingRoomScreen extends JFrame {
 
     public WaitingRoomScreen(String username, String userId, String ingameName) {
         setTitle("Sảnh chờ");
-        setSize(400, 300);
+        setSize(600, 400);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
@@ -60,7 +60,12 @@ public class WaitingRoomScreen extends JFrame {
         JButton playerlistButton = new JButton("Danh sách người chơi");
         playerlistButton.addActionListener(e -> playerList());
         buttonPanel.add(playerlistButton);
-        
+
+        // Create a logout button
+        JButton logoutButton = new JButton("Đăng Xuất");
+        logoutButton.addActionListener(e -> logout(username));
+        buttonPanel.add(logoutButton);
+
         // Add panels to the frame
         add(titlePanel, BorderLayout.NORTH);
         add(profilePanel, BorderLayout.CENTER);
@@ -105,4 +110,28 @@ public class WaitingRoomScreen extends JFrame {
             JOptionPane.showMessageDialog(this, "Error connecting to server.");
         }
     }
+
+    private void logout(String username) {
+        try (Socket socket = new Socket(serverAddress, serverPort);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             Scanner in = new Scanner(socket.getInputStream())) {
+
+            // Send logout request to the server
+            out.println("LOGOUT " + username);
+
+            // Read server response
+            String response = in.nextLine();
+            if ("LOGOUT_SUCCESS".equals(response)) {
+                JOptionPane.showMessageDialog(this, "Đăng xuất thành công!");
+                dispose(); // Close the WaitingRoomScreen
+                new LoginScreen(); // Open login screen
+            } else {
+                JOptionPane.showMessageDialog(this, "Đăng xuất thất bại!");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối đến server.");
+        }
+    }
+
 }

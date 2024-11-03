@@ -16,5 +16,10 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>[3.0.0,)</version> <!-- This specifies any version from 3.0.0 and above -->
         </dependency>
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-websocket</artifactId>
+            <version>9.0.22</version>
+        </dependency>
     </dependencies>
 </project>

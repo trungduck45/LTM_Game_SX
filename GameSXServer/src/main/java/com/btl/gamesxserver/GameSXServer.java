@@ -17,7 +17,7 @@ public class GameSXServer {
     public static void main(String[] args) {
         try {
             // Initialize database connection
-            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "letrungduc45");
+            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "Minhhieu2003");
 
             try (ServerSocket serverSocket = new ServerSocket(PORT)) {
                 System.out.println("Server is running...");
@@ -59,10 +59,13 @@ public class GameSXServer {
                 out = new PrintWriter(socket.getOutputStream(), true);
 
                 String request = in.readLine();
+                System.out.println(request);
                 if (request.startsWith("REGISTER")) {
                     handleRegister(request);
                 } else if (request.startsWith("LOGIN")) {
                     handleLogin(request);
+                } else if (request.startsWith("LOGOUT")) {
+                    handleLogout(request);
                 } else if (request.startsWith("GET_USER_PROFILE")) {
                     handleGetUserProfile(request);
                 } else if (request.startsWith("JOIN_ROOM")) {
@@ -125,7 +128,10 @@ public class GameSXServer {
                 String password = parts[2];
 
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT userid, password, ingame_name FROM users WHERE username = ?");
+                    // Truy vấn username và kiểm tra mật khẩu cùng trạng thái
+                    PreparedStatement stmt = dbConnection.prepareStatement(
+                            "SELECT userid, password, ingame_name, status FROM users WHERE username = ?"
+                    );
                     stmt.setString(1, username);
                     ResultSet rs = stmt.executeQuery();
 
@@ -133,8 +139,23 @@ public class GameSXServer {
                         String storedPassword = rs.getString("password");
                         String userId = rs.getString("userid");
                         String ingameName = rs.getString("ingame_name");
+                        String status = rs.getString("status");
+
                         if (storedPassword.equals(password)) {
-                            out.println("LOGIN_SUCCESS " + userId + " " + ingameName);
+                            if ("offline".equalsIgnoreCase(status)) {
+                                // Cập nhật trạng thái thành online
+                                PreparedStatement updateStatusStmt = dbConnection.prepareStatement(
+                                        "UPDATE users SET status = 'online' WHERE username = ?"
+                                );
+                                updateStatusStmt.setString(1, username);
+                                updateStatusStmt.executeUpdate();
+
+                                // Gửi phản hồi đăng nhập thành công
+                                out.println("LOGIN_SUCCESS " + userId + " " + ingameName);
+                            } else {
+                                // Trả về lỗi nếu tài khoản đã được đăng nhập ở nơi khác
+                                out.println("LOGIN_FAIL_2");
+                            }
                         } else {
                             out.println("LOGIN_FAIL");
                         }
@@ -147,6 +168,35 @@ public class GameSXServer {
                 }
             } else {
                 out.println("LOGIN_FAIL");
+            }
+        }
+
+        private void handleLogout(String request) {
+            String[] parts = request.split(" ");
+            if (parts.length == 2) {
+                String username = parts[1];
+
+                try {
+                    // Cập nhật trạng thái thành offline trong cơ sở dữ liệu
+                    PreparedStatement updateStatusStmt = dbConnection.prepareStatement(
+                            "UPDATE users SET status = 'offline' WHERE username = ?"
+                    );
+                    updateStatusStmt.setString(1, username);
+                    int rowsUpdated = updateStatusStmt.executeUpdate();
+
+                    if (rowsUpdated > 0) {
+                        // Gửi phản hồi đăng xuất thành công
+                        out.println("LOGOUT_SUCCESS");
+                    } else {
+                        // Nếu không tìm thấy người dùng, trả về lỗi
+                        out.println("LOGOUT_FAIL");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("LOGOUT_FAIL");
+                }
+            } else {
+                out.println("LOGOUT_FAIL");
             }
         }
 
