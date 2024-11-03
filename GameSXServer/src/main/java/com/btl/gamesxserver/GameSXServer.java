@@ -338,85 +338,93 @@ public class GameSXServer {
         }
 
         private void startGame() throws IOException {
-            try {
-                int i=0;
-                while( i<10){
-                //while (true) {
-                     // Quyết định ngẫu nhiên giữa dãy số và từ
-                    if (new Random().nextBoolean()) {
-                        playNumberGame();
-                    } else {
-                        playWordGame();
-                    }
-                    // Gửi điểm hiện tại cho client
-                    out.println("CURRENT_SCORE:" + score);
+            StringBuilder message = new StringBuilder();
+            int i=0;
+            while( i<10){
+                // Quyết định ngẫu nhiên giữa dãy số và từ
+                if (new Random().nextBoolean()) {
+                    message.append(generateRandomNumbers());
+                } else {
+                    message.append(shuffleWord());
+                }
+                message.append(";");
                 i++;
-                }
+            }
+            message.setLength(message.length()-1);
+            out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
+            System.out.println("message: "+ message );
+            try {
+                socket.close();
             } catch (IOException e) {
-                System.out.println("Client disconnected: " + socket.getInetAddress());
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+                e.printStackTrace();
             }
         }
 
-        private void playNumberGame() throws IOException {
-            List<Integer> numbers = generateRandomNumbers();
-            out.println("NUMBERS:" + numbers);  // Gửi dãy số cho client
+//        private void playNumberGame() throws IOException {
+//            List<Integer> numbers = generateRandomNumbers();
+//
+//
+//            String sortedNumbers = in.readLine();  // Nhận dãy đã sắp xếp từ client
+//            List<Integer> userSorted = parseNumbers(sortedNumbers);
+//
+////            if (isSorted(userSorted, numbers)) {
+////                score += 10;
+////                out.println("SCORE: Correct Answer +10 points");
+////            } else {
+////                score -= 5;
+////                out.println("SCORE: Wrong Answer -5 points");
+////            }
+//        }
 
-            String sortedNumbers = in.readLine();  // Nhận dãy đã sắp xếp từ client
-            List<Integer> userSorted = parseNumbers(sortedNumbers);
+//        private void playWordGame() throws IOException {
+//            String word = WORDS.get(new Random().nextInt(WORDS.size())); // Chọn từ ngẫu nhiên
+//            String shuffledWord = shuffleWord(word); // Đảo vị trí từ
+//            out.println("WORD:" + shuffledWord);  // Gửi từ bị đảo cho client
+//
+//            String userAnswer = in.readLine();  // Nhận từ đã sắp xếp từ client
+//            if (word.equals(userAnswer)) {
+//                score += 10;
+//                out.println("SCORE: Correct Answer +10 points");
+//            } else {
+//                score -= 5;
+//                out.println("SCORE: Wrong answer -5 points");
+//            }
+//        }
 
-            if (isSorted(userSorted, numbers)) {
-                score += 10;
-                out.println("SCORE: Correct Answer +10 points");
-            } else {
-                score -= 5;
-                out.println("SCORE: Wrong Answer -5 points");
-            }
-        }
-
-        private void playWordGame() throws IOException {
-            String word = WORDS.get(new Random().nextInt(WORDS.size())); // Chọn từ ngẫu nhiên
-            String shuffledWord = shuffleWord(word); // Đảo vị trí từ
-            out.println("WORD:" + shuffledWord);  // Gửi từ bị đảo cho client
-
-            String userAnswer = in.readLine();  // Nhận từ đã sắp xếp từ client
-            if (word.equals(userAnswer)) {
-                score += 10;
-                out.println("SCORE: Correct Answer +10 points");
-            } else {
-                score -= 5;
-                out.println("SCORE: Wrong answer -5 points");
-            }
-        }
-
-        private List<Integer> generateRandomNumbers() {
+        private StringBuilder generateRandomNumbers() {
             Random random = new Random();
             int size = 3 + random.nextInt(8); // Kích thước ngẫu nhiên từ 3 đến 10
-            List<Integer> numbers = new ArrayList<>();
 
-            for (int i = 0; i < size; i++) {
-                numbers.add(random.nextInt(100)); // Giá trị ngẫu nhiên từ 0 đến 99
+            StringBuilder numberString = new StringBuilder();
+            for(int i=0; i<size ; i++){
+                numberString.append(random.nextInt(100));
+                numberString.append(",");
             }
 
-            return numbers;
+            numberString.setLength(numberString.length()-1);
+
+            return numberString;
+        }
+        private String shuffleWord() {
+            String word = WORDS.get(new Random().nextInt(WORDS.size())); // Chọn từ ngẫu nhiên
+            List<Character> characters = new ArrayList<>();
+            for (char c : word.toCharArray()) {
+                characters.add(c);
+            }
+            Collections.shuffle(characters);
+
+            StringBuilder shuffledWord = new StringBuilder();
+            for (char c : characters) {
+                shuffledWord.append(c);
+            }
+            return shuffledWord.toString();
         }
 
-        private List<Integer> parseNumbers(String input) {
-            List<Integer> numbers = new ArrayList<>();
-            try {
-                String[] parts = input.split(",");
-                for (String part : parts) {
-                    numbers.add(Integer.parseInt(part.trim()));
-                }
-            } catch (NumberFormatException e) {
-                out.println("ERROR: Invalid input. Please enter numbers separated by commas.");
+        private void broadcast(String message) {
+            System.out.println("Broadcasting message: " + message);
+            for (ClientHandler client : clients) {
+                client.out.println(message);
             }
-            return numbers;
         }
 
         private boolean isSorted(List<Integer> list, List<Integer> originalList) {
@@ -432,25 +440,18 @@ public class GameSXServer {
             return list.equals(ascendingList) || list.equals(descendingList);
         }
 
-        private String shuffleWord(String word) {
-             List<Character> characters = new ArrayList<>();
-            for (char c : word.toCharArray()) {
-                characters.add(c);
+        private List<Integer> ChuyenVeDayNumbers(String input) {
+            List<Integer> numbers = new ArrayList<>();
+            try {
+                String[] parts = input.split(",");
+                for (String part : parts) {
+                    numbers.add(Integer.parseInt(part.trim()));
+                }
+            } catch (NumberFormatException e) {
+                out.println("ERROR: Invalid input. Please enter numbers separated by commas.");
             }
-            Collections.shuffle(characters);
+            return numbers;
+        }
 
-            StringBuilder shuffledWord = new StringBuilder();
-            for (char c : characters) {
-                shuffledWord.append(c);
-            }
-            return shuffledWord.toString();
-        }
-        
-        private void broadcast(String message) {
-            System.out.println("Broadcasting message: " + message);
-            for (ClientHandler client : clients) {
-                client.out.println(message);
-            }
-        }
     }
 }
