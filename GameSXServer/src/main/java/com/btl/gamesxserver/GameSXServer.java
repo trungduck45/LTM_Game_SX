@@ -13,11 +13,12 @@ public class GameSXServer {
     private static final int PORT = 12345;
     private static List<ClientHandler> clients = new ArrayList<>();
     private static Connection dbConnection;
-
+    private static int check=0;
+    private static String roomIdplay;
     public static void main(String[] args) {
         try {
             // Initialize database connection
-            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "Minhhieu2003");
+            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "letrungduc45");
 
             try (ServerSocket serverSocket = new ServerSocket(PORT)) {
                 System.out.println("Server is running...");
@@ -44,7 +45,7 @@ public class GameSXServer {
         private PrintWriter out;
         private String username;
         private int score = 0;
-
+     
         // Danh sách các từ để chơi
         private static final List<String> WORDS = Arrays.asList("apple", "banana", "orange", "grape", "mango");
 
@@ -76,7 +77,12 @@ public class GameSXServer {
                     handleDeleteRoom(request);
                 } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
                     handleGetAllUsers();
-                } else {
+                } 
+//                else if (request.equals("STARTGAME")) { // Xử lý yêu cầu GET_ALL_USERS
+//                    startGame();
+//                    System.out.println("bắt đầu game:");
+//                }
+                else {
                     // Handle other requests (e.g., game logic)
                     username = request;
                     startGame();
@@ -228,13 +234,13 @@ public class GameSXServer {
             }
         }
 
-        private void handleJoinRoom (String request) {
+        private void handleJoinRoom (String request) throws IOException {
             String[] parts = request.split(" ");
 
             if (parts.length == 3) {
                 String roomId = parts[1];
                 String userId = parts[2];
-
+               
                 try {
                     PreparedStatement stmt = dbConnection.prepareStatement("SELECT player1_id, player2_id FROM rooms WHERE id = ?");
                     stmt.setString(1, roomId);
@@ -251,6 +257,7 @@ public class GameSXServer {
                             stmt2.executeUpdate();
                             out.println("JOIN_SUCCESS");
                             broadcast("PLAYER_JOIN");
+                            startGame();
                         } else {
                             out.println("ROOM_FULL");
                         }
@@ -266,12 +273,14 @@ public class GameSXServer {
 
         private void handleCreateRoom (String request) {
             String[] parts = request.split(" ");
+            String message="";
             if (parts.length == 2) {
                 String userid = parts[1];
 
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO rooms (player1_id) VALUES (?)");
+                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO rooms (player1_id,message) VALUES (?,?)");
                     stmt.setString(1, userid);
+                    stmt.setString(2, message);
                     stmt.executeUpdate();
                     PreparedStatement stmt2 = dbConnection.prepareStatement("SELECT id FROM rooms WHERE player1_id = ?");
                     stmt2.setString(1, userid);
@@ -281,6 +290,8 @@ public class GameSXServer {
                     } else {
                         out.println("CREATE_ROOM_FAIL");
                     }
+                     roomIdplay = rs.getString("id");
+                     System.out.println("roomid play:" +roomIdplay);
                 } catch (SQLException e) {
                     e.printStackTrace();
                     out.println("CREATE_ROOM_FAIL");
@@ -337,8 +348,10 @@ public class GameSXServer {
             }
         }
 
-        private void startGame() throws IOException {
+        private void startGame()  {
             StringBuilder message = new StringBuilder();
+            message.append(roomIdplay);
+            message.append("/");
             int i=0;
             while( i<10){
                 // Quyết định ngẫu nhiên giữa dãy số và từ
@@ -351,8 +364,15 @@ public class GameSXServer {
                 i++;
             }
             message.setLength(message.length()-1);
-            out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
-            System.out.println("message: "+ message );
+            
+            if(check == 1){
+                out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
+                System.out.println("send message to client: "+ message );
+                check = 0;
+            } else {
+                check = 1;
+            }
+            
             try {
                 socket.close();
             } catch (IOException e) {

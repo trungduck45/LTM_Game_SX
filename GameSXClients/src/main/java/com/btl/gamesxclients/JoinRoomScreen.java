@@ -74,8 +74,9 @@ public class JoinRoomScreen extends JFrame {
             String response = in.nextLine();
             if ("JOIN_SUCCESS".equals(response)) {
                 messageLabel.setText("Joined room successfully.");
+               // out.println("STARTGAME");
                 SwingUtilities.invokeLater(() -> {
-                    new GameScreen("localhost", userId).setVisible(true);
+                    new GameScreen("localhost", userId, roomId).setVisible(true);
                     dispose();
                 });
             } else if ("ROOM_FULL".equals(response)) {

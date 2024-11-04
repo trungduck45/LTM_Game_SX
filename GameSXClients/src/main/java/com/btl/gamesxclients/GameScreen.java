@@ -5,10 +5,10 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.*;
 import java.util.List;
 import java.util.Timer;
-import java.util.TimerTask;
-
 
 public class GameScreen extends JFrame {
     private List<JTextField> inputFields = new ArrayList<>();
@@ -16,6 +16,7 @@ public class GameScreen extends JFrame {
     private JPanel inputRow;
     private PrintWriter out;
     private BufferedReader in;
+    private final String userId;
     
     private JLabel scoreLabel; 
     private int scoreSum = 0;
@@ -26,19 +27,22 @@ public class GameScreen extends JFrame {
     private int remainingTime; // Thời gian còn lại (tính bằng giây)
     
     private JLabel currentLevel ;  // Màn hiện tại
-<<<<<<< HEAD
     private JLabel ingameNameLabel;
     
     private int currentLevelValue=1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
+    
+    private void fetchDataAndDisplay(int roomId) {
+        DatabaseConnection dbConnection = new DatabaseConnection();
+        String listNumWord = dbConnection.getListNumWordFromDatabase(roomId);
+        
+//        if (listNumWord != null) {
+//            updateGameData(listNumWord); // Gọi phương thức để cập nhật giao diện
+//        }
+    }
 
-    public GameScreen(String serverAddress, String userId) {
-=======
-    private int currentLevelValue=1;
-    private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
-
-    public GameScreen(String serverAddress, String playerName) {
->>>>>>> 2cc665650d4fde61014805933beda765d4fa5891
+    public GameScreen(String serverAddress, String userId , String roomId) {
+        this.userId = userId;
         try {
             Socket socket = new Socket(serverAddress, 12345);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -46,9 +50,13 @@ public class GameScreen extends JFrame {
 
             out.println(userId); // Gửi tên người chơi tới server
             
-            
+            DatabaseConnection dbConnection = new DatabaseConnection();
+            String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt(roomId));
         
+            System.out.println("Day càn sap xep: "+listNumWord);
             initGameUI(userId);
+            
+            
             new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
         } catch (IOException e) {
@@ -56,7 +64,6 @@ public class GameScreen extends JFrame {
             System.exit(0);
         }
     }
-<<<<<<< HEAD
     
     private void initGameUI(String userId) {
         setTitle("Trò chơi sắp xếp");
@@ -103,64 +110,7 @@ public class GameScreen extends JFrame {
         sendButton.addActionListener(e -> sendDataToServer());
 
         JButton exitButton = new JButton("Thoát Game");
-        exitButton.addActionListener(e -> exitToNameScreen());
-
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.add(sendButton);
-        buttonPanel.add(exitButton);
-
-        add(buttonPanel, BorderLayout.SOUTH);
-        
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setVisible(true);
-    }
-
-    private void increaseLevel() {
-    if (currentLevelValue < MAX_LEVELS) {
-        currentLevelValue++;
-        currentLevel.setText("Màn " + currentLevelValue);
-    } else {
-        goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
-    }
-}
-=======
- private void initGameUI() {
-        setTitle("Trò chơi sắp xếp");
-        setSize(500, 300);
-        setLayout(new BorderLayout());
-
-        currentLevel = new JLabel("Màn " + currentLevelValue, SwingConstants.CENTER);
-        timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
-        scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
-
-        serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        serverRow.add(new JLabel("Server Row"));
-
-        inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        inputRow.add(new JLabel("Input Row"));
-
-        JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        timerPanel.add(timerLabel);
-
-        JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        scorePanel.add(scoreLabel);
-
-        JPanel mainPanel = new JPanel();
-        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-
-        mainPanel.add(currentLevel);
-        mainPanel.add(serverRow);
-        mainPanel.add(inputRow);
-        mainPanel.add(timerPanel);
-        mainPanel.add(scorePanel);
-
-        add(mainPanel, BorderLayout.CENTER);
-
-        JButton sendButton = new JButton("Check");
-        sendButton.addActionListener(e -> sendDataToServer());
-
-        JButton exitButton = new JButton("Thoát Game");
-        exitButton.addActionListener(e -> exitToNameScreen());
+        exitButton.addActionListener(e -> exitScreen());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(sendButton);
@@ -177,19 +127,9 @@ public class GameScreen extends JFrame {
             currentLevelValue++;
             currentLevel.setText("Màn " + currentLevelValue);
         } else {
-            
-            JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-            scorePanel.add(scoreLabel);
-            // Hiển thị thông báo số điểm và thoát game
-            
-            String message = "Bạn đã hoàn thành tất cả các màn chơi!\nĐiểm của bạn: " + scoreSum ; // Giả định bạn có phương thức getScore() trả về điểm
-            JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-
-            // Gọi hàm thoát về trang namescreen
-            exitToNameScreen();
+            goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
         }
     }
->>>>>>> 2cc665650d4fde61014805933beda765d4fa5891
 
     private void goToEndGameScreen() {
         dispose(); // Đóng cửa sổ GameScreen hiện tại
@@ -317,18 +257,38 @@ public class GameScreen extends JFrame {
     }
 
 
+    private void deleteRoom() {
+        try (Socket socket = new Socket("localhost", 12345);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             Scanner in = new Scanner(socket.getInputStream())) {
+
+            // Send delete room request to the server
+            out.println("DELETE_ROOM " + userId);
+
+            // Read server response
+            String response = in.nextLine();
+            if (!"DELETE_ROOM_SUCCESS".equals(response)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete room.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.");
+        }
+    }
+
     // Phương thức để quay về màn hình NameScreen
-    private void exitToNameScreen() {
+    private void exitScreen() {
          if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
+         deleteRoom();
         dispose(); // Đóng cửa sổ GameScreen
        // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
-public void updateScore(String score) {
-        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
-        scoreSum = Integer.parseInt(score);
-    }
+//public void updateScore(String score) {
+//        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
+//        scoreSum = Integer.parseInt(score);
+//    }
 
     
 public void showResultMessage(String message) {

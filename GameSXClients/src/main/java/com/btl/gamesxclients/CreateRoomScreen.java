@@ -19,7 +19,7 @@ public class CreateRoomScreen extends JFrame {
         this.userId = userId;
         this.roomId = roomId;
 
-        setTitle("Create Room");
+        setTitle("Tạo phòng");
         setSize(400, 200);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -72,7 +72,7 @@ public class CreateRoomScreen extends JFrame {
                     String response = in.nextLine();
                     if ("PLAYER_JOIN".equals(response)) {
                         SwingUtilities.invokeLater(() -> {
-                            new GameScreen("localhost", userId).setVisible(true);
+                            new GameScreen("localhost", userId,roomId).setVisible(true);
                             dispose();
                         });
                         break;
