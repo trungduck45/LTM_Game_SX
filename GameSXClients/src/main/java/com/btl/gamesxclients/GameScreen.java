@@ -5,10 +5,10 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.TimerTask;
+
 
 public class GameScreen extends JFrame {
     private List<JTextField> inputFields = new ArrayList<>();
@@ -16,47 +16,30 @@ public class GameScreen extends JFrame {
     private JPanel inputRow;
     private PrintWriter out;
     private BufferedReader in;
-    private final String userId;
-    
-    private JLabel scoreLabel; 
+
+    private JLabel scoreLabel;
     private int scoreSum = 0;
-    
+
     private Timer timer; // Bộ đếm thời gian
-    
+
     private JLabel timerLabel; // Hiển thị thời gian đếm ngược
     private int remainingTime; // Thời gian còn lại (tính bằng giây)
-    
-    private JLabel currentLevel ;  // Màn hiện tại
-    private JLabel ingameNameLabel;
-    
-    private int currentLevelValue=1;
-    private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
-    
-    private void fetchDataAndDisplay(int roomId) {
-        DatabaseConnection dbConnection = new DatabaseConnection();
-        String listNumWord = dbConnection.getListNumWordFromDatabase(roomId);
-        
-//        if (listNumWord != null) {
-//            updateGameData(listNumWord); // Gọi phương thức để cập nhật giao diện
-//        }
-    }
 
-    public GameScreen(String serverAddress, String userId , String roomId) {
-        this.userId = userId;
+    private JLabel currentLevel;  // Màn hiện tại
+    private JLabel ingameNameLabel;
+
+    private int currentLevelValue = 1;
+    private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
+
+    public GameScreen(String serverAddress, String userId,String roomId) {
         try {
             Socket socket = new Socket(serverAddress, 12345);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
             out.println(userId); // Gửi tên người chơi tới server
-            
-            DatabaseConnection dbConnection = new DatabaseConnection();
-            String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt(roomId));
-        
-            System.out.println("Day càn sap xep: "+listNumWord);
+
             initGameUI(userId);
-            
-            
             new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
         } catch (IOException e) {
@@ -64,22 +47,23 @@ public class GameScreen extends JFrame {
             System.exit(0);
         }
     }
-    
+
+
     private void initGameUI(String userId) {
         setTitle("Trò chơi sắp xếp");
         setSize(500, 300);
         setLayout(new BorderLayout());
         // Fetch user profile
         UserProfile userProfile = UserProfileService.getUserProfile(userId);
-         
+
         currentLevel = new JLabel("Màn " + currentLevelValue, SwingConstants.CENTER);
-        
+
         timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
-        
+
         ingameNameLabel = new JLabel("In-game Name: " + userProfile.getIngameName());
         ingameNameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-        
+
         scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
 
         serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -110,14 +94,71 @@ public class GameScreen extends JFrame {
         sendButton.addActionListener(e -> sendDataToServer());
 
         JButton exitButton = new JButton("Thoát Game");
-        exitButton.addActionListener(e -> exitScreen());
+        exitButton.addActionListener(e -> exitToNameScreen());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(sendButton);
         buttonPanel.add(exitButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
-        
+
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setVisible(true);
+    }
+
+////    private void increaseLevel() {
+////    if (currentLevelValue < MAX_LEVELS) {
+////        currentLevelValue++;
+////        currentLevel.setText("Màn " + currentLevelValue);
+////    } else {
+////        goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
+////    }
+//}
+
+    private void initGameUI() {
+        setTitle("Trò chơi sắp xếp");
+        setSize(500, 300);
+        setLayout(new BorderLayout());
+
+        currentLevel = new JLabel("Màn " + currentLevelValue, SwingConstants.CENTER);
+        timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
+        scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
+
+        serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        serverRow.add(new JLabel("Server Row"));
+
+        inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        inputRow.add(new JLabel("Input Row"));
+
+        JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        timerPanel.add(timerLabel);
+
+        JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        scorePanel.add(scoreLabel);
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+
+        mainPanel.add(currentLevel);
+        mainPanel.add(serverRow);
+        mainPanel.add(inputRow);
+        mainPanel.add(timerPanel);
+        mainPanel.add(scorePanel);
+
+        add(mainPanel, BorderLayout.CENTER);
+
+        JButton sendButton = new JButton("Check");
+        sendButton.addActionListener(e -> sendDataToServer());
+
+        JButton exitButton = new JButton("Thoát Game");
+        exitButton.addActionListener(e -> exitToNameScreen());
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.add(sendButton);
+        buttonPanel.add(exitButton);
+
+        add(buttonPanel, BorderLayout.SOUTH);
+
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
     }
@@ -127,16 +168,25 @@ public class GameScreen extends JFrame {
             currentLevelValue++;
             currentLevel.setText("Màn " + currentLevelValue);
         } else {
-            goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
+
+            JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            scorePanel.add(scoreLabel);
+            // Hiển thị thông báo số điểm và thoát game
+
+            String message = "Bạn đã hoàn thành tất cả các màn chơi!\nĐiểm của bạn: " + scoreSum; // Giả định bạn có phương thức getScore() trả về điểm
+            JOptionPane.showMessageDialog(this, message, "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+
+            // Gọi hàm thoát về trang namescreen
+            exitToNameScreen();
         }
     }
+
 
     private void goToEndGameScreen() {
         dispose(); // Đóng cửa sổ GameScreen hiện tại
         EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText(), scoreSum);
         endGameScreen.setVisible(true);
     }
-
 
 
     public void updateServerNumbers(String[] numbers) {
@@ -147,7 +197,7 @@ public class GameScreen extends JFrame {
 
         // Nối các số thành một chuỗi mà không có dấu ngoặc
         String numbersString = String.join(", ", numbers);
-        
+
         // Tạo nhãn hiển thị chuỗi số
         JLabel serverLabel = new JLabel(numbersString);
         serverRow.add(serverLabel);
@@ -164,50 +214,51 @@ public class GameScreen extends JFrame {
         serverRow.repaint();
         inputRow.revalidate();
         inputRow.repaint();
-        
-          startTimer(); // Khởi động lại bộ đếm khi có câu mới
+
+        startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
-    
+
     public void updateServerWord(String word) {
         // Xóa các phần tử cũ trước khi thêm mới
         serverRow.removeAll();
         inputRow.removeAll();
         inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
 
-      
-        // Tạo nhãn hiển thị 
+
+        // Tạo nhãn hiển thị
         JLabel serverLabel = new JLabel(word);
         serverRow.add(serverLabel);
 
         // Thêm các ô nhập liệu tương ứng với mỗi số
-       
-            JTextField inputField = new JTextField(10);
-            inputFields.add(inputField);
-            inputRow.add(inputField);
-    
+
+        JTextField inputField = new JTextField(10);
+        inputFields.add(inputField);
+        inputRow.add(inputField);
+
 
         // Cập nhật giao diện sau khi thêm các thành phần mới
         serverRow.revalidate();
         serverRow.repaint();
         inputRow.revalidate();
         inputRow.repaint();
-        
+
         startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
+
     private void sendDataToServer() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm khi người dùng nhấn Check
         }
-            
+
         try {
             StringBuilder inputData = new StringBuilder();
 
             // Lấy dữ liệu từ các ô nhập liệu
             for (JTextField field : inputFields) {
-               
+
                 String text = field.getText().trim();
-                if(text.length() < 1){
-                    text= "0";
+                if (text.length() < 1) {
+                    text = "0";
                 }
                 if (text.isEmpty()) {
                     JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -227,16 +278,16 @@ public class GameScreen extends JFrame {
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi khi gửi dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
-         increaseLevel(); 
+        increaseLevel();
     }
 
-    
+
     private void startTimer() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
 
-        remainingTime = 21; // Thời gian đếm ngược 
+        remainingTime = 21; // Thời gian đếm ngược
         timerLabel.setText("Thời gian: " + remainingTime + "s"); // Cập nhật nhãn thời gian
 
         timer = new Timer();
@@ -257,61 +308,42 @@ public class GameScreen extends JFrame {
     }
 
 
-    private void deleteRoom() {
-        try (Socket socket = new Socket("localhost", 12345);
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-             Scanner in = new Scanner(socket.getInputStream())) {
-
-            // Send delete room request to the server
-            out.println("DELETE_ROOM " + userId);
-
-            // Read server response
-            String response = in.nextLine();
-            if (!"DELETE_ROOM_SUCCESS".equals(response)) {
-                JOptionPane.showMessageDialog(this, "Failed to delete room.");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Error connecting to server.");
-        }
-    }
-
     // Phương thức để quay về màn hình NameScreen
-    private void exitScreen() {
-         if (timer != null) {
+    private void exitToNameScreen() {
+        if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
-         deleteRoom();
         dispose(); // Đóng cửa sổ GameScreen
-       // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
+        // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
-//public void updateScore(String score) {
-//        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
-//        scoreSum = Integer.parseInt(score);
-//    }
 
-    
-public void showResultMessage(String message) {
-    SwingUtilities.invokeLater(() -> {
-        // Tạo JDialog để hiển thị thông báo
-        JDialog dialog = new JDialog(this, "Thông báo", true);
-        dialog.setLayout(new BorderLayout());
-        dialog.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
-        dialog.setSize(300, 100); // Kích thước hộp thoại
-        dialog.setLocationRelativeTo(this); // Căn giữa so với cửa sổ chính
-        dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+    public void updateScore(String score) {
+        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
+        scoreSum = Integer.parseInt(score);
+    }
 
-        // Sử dụng java.util.Timer để đóng JDialog sau 1 giây
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                SwingUtilities.invokeLater(dialog::dispose); // Đóng hộp thoại trên Swing EDT
-            }
-        }, 1000); // 1000ms = 1 giây
 
-        // Hiển thị hộp thoại
-        dialog.setVisible(true);
-    });
-}
+    public void showResultMessage(String message) {
+        SwingUtilities.invokeLater(() -> {
+            // Tạo JDialog để hiển thị thông báo
+            JDialog dialog = new JDialog(this, "Thông báo", true);
+            dialog.setLayout(new BorderLayout());
+            dialog.add(new JLabel(message, SwingConstants.CENTER), BorderLayout.CENTER);
+            dialog.setSize(300, 100); // Kích thước hộp thoại
+            dialog.setLocationRelativeTo(this); // Căn giữa so với cửa sổ chính
+            dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+            // Sử dụng java.util.Timer để đóng JDialog sau 1 giây
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    SwingUtilities.invokeLater(dialog::dispose); // Đóng hộp thoại trên Swing EDT
+                }
+            }, 1000); // 1000ms = 1 giây
+
+            // Hiển thị hộp thoại
+            dialog.setVisible(true);
+        });
+    }
 }
