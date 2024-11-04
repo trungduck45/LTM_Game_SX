@@ -39,7 +39,7 @@ public class GameScreen extends JFrame {
 
             out.println(userId); // Gửi tên người chơi tới server
 
-            initGameUI(userId);
+            initGameUI(userId,roomId);
             new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
         } catch (IOException e) {
@@ -49,8 +49,8 @@ public class GameScreen extends JFrame {
     }
 
 
-    private void initGameUI(String userId) {
-        setTitle("Trò chơi sắp xếp");
+    private void initGameUI(String userId,String roomId) {
+        setTitle("Phòng chơi số "+roomId);
         setSize(500, 300);
         setLayout(new BorderLayout());
         // Fetch user profile
