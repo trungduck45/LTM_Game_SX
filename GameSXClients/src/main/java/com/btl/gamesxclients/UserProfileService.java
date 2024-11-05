@@ -70,4 +70,43 @@ public class UserProfileService {
         }
         return playerList;
     }
+
+    public static List<UserProfile> getOnlinePlayers() {
+        List<UserProfile> onlinePlayerList = new ArrayList<>();
+        try {
+            Socket socket = new Socket("localhost", 12345); // Kết nối tới server
+            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+            // Gửi yêu cầu lấy danh sách người dùng
+            out.println("GET_ALL_USERS");
+
+            // Đọc phản hồi từ server, giả sử mỗi người chơi nằm trên một dòng
+            String response;
+            while ((response = in.readLine()) != null && !response.equals("END")) {
+                String[] profileData = response.split(" ");
+                String userId = profileData[0];
+                String ingameName = profileData[1];
+                int totalPoint = Integer.parseInt(profileData[2]);
+                int rankedPoint = Integer.parseInt(profileData[3]);
+                String status = profileData[4];
+
+                // Chỉ thêm người chơi có trạng thái "online"
+                if ("online".equalsIgnoreCase(status)) {
+                    // Tạo đối tượng UserProfile và thêm vào danh sách
+                    UserProfile userProfile = new UserProfile(userId, ingameName, totalPoint, rankedPoint, status);
+                    onlinePlayerList.add(userProfile);
+                }
+            }
+
+            // Đóng kết nối
+            in.close();
+            out.close();
+            socket.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return onlinePlayerList;
+    }
+
 }

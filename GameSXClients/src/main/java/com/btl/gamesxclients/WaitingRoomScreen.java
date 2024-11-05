@@ -1,15 +1,25 @@
 package com.btl.gamesxclients;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.List;
 import java.util.Scanner;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+
 
 public class WaitingRoomScreen extends JFrame {
     private String serverAddress = "localhost"; // Ensure this is correct
     private int serverPort = 12345; // Ensure this is correct
+    private DefaultTableModel onlineTableModel;
+    private JTable onlinePlayersTable;
+    private JButton challengeButton; // Button for challenging an online user
+    private String selectedPlayer; // Store the selected player
+    private String selectedPlayerId; // Lưu ID của người chơi được chọn
 
     public WaitingRoomScreen(String username, String userId, String ingameName) {
         setTitle("Sảnh chờ");
@@ -39,13 +49,40 @@ public class WaitingRoomScreen extends JFrame {
         totalPointLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         totalPointLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
-//        JLabel rankedPointLabel = new JLabel("Ranked Point: " + userProfile.getRankedPoint());
-//        rankedPointLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-//        rankedPointLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
         profilePanel.add(ingameNameLabel);
         profilePanel.add(totalPointLabel);
-//        profilePanel.add(rankedPointLabel);
+
+        // Create a panel for online players
+        JPanel onlinePlayersPanel = new JPanel();
+        onlinePlayersPanel.setLayout(new BorderLayout());
+        onlinePlayersPanel.setBorder(BorderFactory.createTitledBorder("Người chơi trực tuyến"));
+
+        // Create a table to display online players
+        String[] columnNames = {"User ID", "User Name", "Total Point", "Status"};
+        onlineTableModel = new DefaultTableModel(columnNames, 0);
+        onlinePlayersTable = new JTable(onlineTableModel);
+        JScrollPane onlineScrollPane = new JScrollPane(onlinePlayersTable);
+        onlinePlayersPanel.add(onlineScrollPane, BorderLayout.CENTER);
+
+        // Add mouse listener to handle row selection
+        onlinePlayersTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int row = onlinePlayersTable.getSelectedRow();
+                if (row != -1) {
+                    selectedPlayer = (String) onlineTableModel.getValueAt(row, 0); // Lấy tên người chơi
+                    selectedPlayerId = (String) onlineTableModel.getValueAt(row, 1); // Lấy ID người chơi (giả sử bạn đã thay đổi cột tương ứng trong bảng)
+                    challengeButton.setEnabled(true); // Kích hoạt nút thách đấu
+                }
+            }
+        });
+
+        // Fetch online players initially
+        updateOnlinePlayers();
+
+        // Create a Timer to refresh the online players list every 5 seconds
+        Timer timer = new Timer(5000, e -> updateOnlinePlayers());
+        timer.start(); // Start the timer
 
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
@@ -56,10 +93,16 @@ public class WaitingRoomScreen extends JFrame {
         JButton createRoomButton = new JButton("Tạo phòng");
         createRoomButton.addActionListener(e -> createRoom(userId));
         buttonPanel.add(createRoomButton);
-        
+
         JButton playerlistButton = new JButton("Danh sách người chơi");
         playerlistButton.addActionListener(e -> playerList());
         buttonPanel.add(playerlistButton);
+
+        // Create the challenge button, initially disabled
+        challengeButton = new JButton("Thách Đấu");
+        challengeButton.setEnabled(false);
+        challengeButton.addActionListener(e -> challengePlayer(userId));
+        buttonPanel.add(challengeButton);
 
         // Create a logout button
         JButton logoutButton = new JButton("Đăng Xuất");
@@ -68,7 +111,8 @@ public class WaitingRoomScreen extends JFrame {
 
         // Add panels to the frame
         add(titlePanel, BorderLayout.NORTH);
-        add(profilePanel, BorderLayout.CENTER);
+        add(profilePanel, BorderLayout.WEST);
+        add(onlinePlayersPanel, BorderLayout.CENTER); // Add the online players panel
         add(buttonPanel, BorderLayout.SOUTH);
 
         // Center the frame on the screen
@@ -78,10 +122,83 @@ public class WaitingRoomScreen extends JFrame {
         setVisible(true);
     }
 
+    private void updateOnlinePlayers() {
+        // Clear the current model
+        onlineTableModel.setRowCount(0);
+
+        // Fetch online players
+        List<UserProfile> onlinePlayers = UserProfileService.getOnlinePlayers();
+        for (UserProfile player : onlinePlayers) {
+            Object[] rowData = {player.getUserId(), player.getIngameName(), player.getTotalPoint(), player.getStatus()};
+            onlineTableModel.addRow(rowData);
+        }
+    }
+
+    private void challengePlayer(String userId) {
+        // Hiển thị hộp thoại xác nhận thách đấu
+        int response1 = JOptionPane.showConfirmDialog(this,
+                "Bạn có muốn thách đấu người chơi " + selectedPlayer + " không?",
+                "Thách Đấu",
+                JOptionPane.YES_NO_CANCEL_OPTION);
+
+        // Kiểm tra phản hồi từ hộp thoại
+        if (response1 == JOptionPane.YES_OPTION) {
+            // Khởi tạo socket để gửi yêu cầu
+            try (Socket socket = new Socket(serverAddress, serverPort);
+                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+                 Scanner in = new Scanner(socket.getInputStream())) {
+
+                // Khởi tạo và bắt đầu luồng lắng nghe
+                ServerListener serverListener = new ServerListener(socket, this);
+                Thread listenerThread = new Thread(serverListener);
+                listenerThread.start(); // Bắt đầu luồng lắng nghe
+
+                // Gửi yêu cầu thách đấu tới backend
+                out.println("CHALLENGE " + selectedPlayerId + " " + userId);
+                JOptionPane.showMessageDialog(this, "Thách đấu với " + selectedPlayer + " đã được gửi!");
+
+                // Nhận phản hồi từ server
+                String response = in.nextLine();
+                System.out.println(response);
+                if (response.startsWith("CHALLENGE_SENT")) {
+                    JOptionPane.showMessageDialog(this, "Challenge success.");
+                } else if (response.startsWith("CHALLENGE_FAIL1")) {
+                    JOptionPane.showMessageDialog(this, "Challenge failed. Please try again.");
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+                JOptionPane.showMessageDialog(this, "Lỗi kết nối đến server.");
+            }
+        } else if (response1 == JOptionPane.NO_OPTION) {
+            // Gọi hàm deleteRoom nếu người dùng chọn No
+            deleteRoom(userId); // Giả sử bạn có ID người chơi hoặc thông tin cần thiết
+        } else if (response1 == JOptionPane.CANCEL_OPTION || response1 == JOptionPane.CLOSED_OPTION) {
+            // Không làm gì nếu người dùng chọn Cancel hoặc đóng hộp thoại
+            JOptionPane.showMessageDialog(this, "Thách đấu đã bị hủy.");
+        }
+    }
+
+
+
+
+    private void sendChallengeResponse(String response) {
+        try (Socket socket = new Socket(serverAddress, serverPort);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+
+            out.println(response);
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Lỗi kết nối đến server.");
+        }
+    }
+
+
+
     private void joinRoom(String userId) {
         new JoinRoomScreen(userId).setVisible(true); // Open RoomScreen
     }
-    private void playerList(){
+
+    private void playerList() {
         new PlayerListScreen();
     }
 
@@ -131,6 +248,25 @@ public class WaitingRoomScreen extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Lỗi kết nối đến server.");
+        }
+    }
+
+    private void deleteRoom(String userId) {
+        try (Socket socket = new Socket("localhost", 12345);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             Scanner in = new Scanner(socket.getInputStream())) {
+
+            // Send delete room request to the server
+            out.println("DELETE_ROOM " + userId);
+
+            // Read server response
+            String response = in.nextLine();
+            if (!"DELETE_ROOM_SUCCESS".equals(response)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete room.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.");
         }
     }
 

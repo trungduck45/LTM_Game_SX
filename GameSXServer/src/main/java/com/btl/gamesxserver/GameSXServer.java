@@ -77,6 +77,8 @@ public class GameSXServer {
                     handleDeleteRoom(request);
                 } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
                     handleGetAllUsers();
+                } else if (request.equals("CHALLENGE")) {
+                    handleChallenge(request);
                 } else {
                     // Handle other requests (e.g., game logic)
                     username = request;
@@ -337,6 +339,42 @@ public class GameSXServer {
                 out.println("GET_ALL_USERS_FAIL");
             }
         }
+
+        private void handleChallenge(String request) {
+            String[] parts = request.split(" ");
+
+            if (parts.length == 3) {
+                String challengerName = parts[2];
+                String targetUsername = parts[1];
+
+                try {
+                    boolean targetFound = false;
+                    for (ClientHandler client : clients) {
+                        if (client.username != null && client.username.equals(targetUsername)) {
+                            targetFound = true;
+                            if (client.socket.isConnected()) {
+                                // Gửi yêu cầu thách đấu cho người chơi mục tiêu
+                                client.out.println("CHALLENGE_REQUEST_FROM " + challengerName);
+                                out.println("CHALLENGE_SENT " + targetUsername);
+                            } else {
+                                out.println("CHALLENGE_FAIL1 Target user is not online.");
+                            }
+                            break;
+                        }
+                    }
+                    if (!targetFound) {
+                        out.println("CHALLENGE_FAIL User not found.");
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    out.println("CHALLENGE_FAIL An error occurred.");
+                }
+            } else {
+                out.println("CHALLENGE_FAIL Invalid request format.");
+            }
+        }
+
+
 
         private void startGame() throws IOException {
             StringBuilder message = new StringBuilder();
