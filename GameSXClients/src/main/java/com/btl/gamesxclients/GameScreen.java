@@ -6,6 +6,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import  java.util.Scanner;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -16,6 +17,7 @@ public class GameScreen extends JFrame {
     private JPanel inputRow;
     private PrintWriter out;
     private BufferedReader in;
+    private final String userId;
 
     private JLabel scoreLabel;
     private int scoreSum = 0;
@@ -32,6 +34,7 @@ public class GameScreen extends JFrame {
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
     public GameScreen(String serverAddress, String userId,String roomId) {
+        this.userId = userId;
         try {
             Socket socket = new Socket(serverAddress, 12345);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -39,6 +42,9 @@ public class GameScreen extends JFrame {
 
             out.println(userId); // Gửi tên người chơi tới server
 
+            DatabaseConnection dbConnection = new DatabaseConnection();
+            String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt( roomId));
+            System.out.println("Lấy ra từ DB:" + listNumWord);
             initGameUI(userId,roomId);
             new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
@@ -94,7 +100,7 @@ public class GameScreen extends JFrame {
         sendButton.addActionListener(e -> sendDataToServer());
 
         JButton exitButton = new JButton("Thoát Game");
-        exitButton.addActionListener(e -> exitToNameScreen());
+        exitButton.addActionListener(e -> exitScreen());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(sendButton);
@@ -242,11 +248,32 @@ public class GameScreen extends JFrame {
     }
 
 
+
+    private void deleteRoom() {
+        try (Socket socket = new Socket("localhost", 12345);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             Scanner in = new Scanner(socket.getInputStream())) {
+
+            // Send delete room request to the server
+            out.println("DELETE_ROOM " + userId);
+
+            // Read server response
+            String response = in.nextLine();
+            if (!"DELETE_ROOM_SUCCESS".equals(response)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete room.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.");
+        }
+    }
+
     // Phương thức để quay về màn hình NameScreen
-    private void exitToNameScreen() {
+    private void exitScreen() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
+        deleteRoom();
         dispose(); // Đóng cửa sổ GameScreen
         // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
