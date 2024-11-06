@@ -14,6 +14,8 @@ public class CreateRoomScreen extends JFrame {
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
+    private  String player1;
+    private  String player2;
 
     public CreateRoomScreen(String userId, String roomId) {
         this.userId = userId;
@@ -73,11 +75,26 @@ public class CreateRoomScreen extends JFrame {
                     if ("PLAYER_JOIN".equals(response)) {
                         out.println("STARTGAME");
                         new Thread(new ServerListener(in, this)).start();
+                        DatabaseConnection dbConnection = new DatabaseConnection();
+                        String users = dbConnection.getListUserDatabase(Integer.parseInt(roomId));
+                        System.out.println("Từ room :" + roomId + " Lấy ra từ DB các user: " + users);
 
-//                         SwingUtilities.invokeLater(() -> {
-//                            new GameScreen("localhost", userId, roomId).setVisible(true);
-//                            dispose();
-//                        });
+                        if (!users.isEmpty()) {
+                            // Split the IDs and handle cases where only one ID might be present
+                            String[] userIds = users.split(":");
+
+                            player1 = (userIds.length > 0) ? userIds[0] : "N/A";
+                            player2 = (userIds.length > 1) ? userIds[1] : "N/A";
+                            System.out.println("Player 1 ID: " + player1);
+                            System.out.println("Player 2 ID: " + player2);
+                        } else {
+                            System.out.println("No user IDs found for room ID: " + roomId);
+                        }
+
+                        SwingUtilities.invokeLater(() -> {
+                            new GameScreen("localhost", player1, roomId , player2).setVisible(true);
+                            dispose();
+                        });
                         break;
                     }
                 } catch (IOException e) {

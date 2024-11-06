@@ -29,6 +29,7 @@ public class GameScreen extends JFrame {
 
     private JLabel currentLevel;  // Màn hiện tại
     private JLabel ingameNameLabel;
+    private JLabel ingameNameDThuLabel;
 
     private int currentLevelValue = 1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
@@ -76,9 +77,9 @@ public class GameScreen extends JFrame {
 
         scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
 
-        ingameNameLabel = new JLabel("In-game Name DOi THU: " + userProfile2.getIngameName());
-        ingameNameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        ingameNameDThuLabel = new JLabel("In-game Name DOi THU: " + userProfile2.getIngameName());
+        ingameNameDThuLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        ingameNameDThuLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
         serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         serverRow.add(new JLabel("Server Row"));
@@ -99,6 +100,7 @@ public class GameScreen extends JFrame {
         mainPanel.add(serverRow);
         mainPanel.add(inputRow);
         mainPanel.add(ingameNameLabel);
+        mainPanel.add(ingameNameDThuLabel);
         mainPanel.add(timerPanel);
         mainPanel.add(scorePanel);
 

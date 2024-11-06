@@ -12,7 +12,6 @@ public class ServerListener implements Runnable {
         this.in = in;
         this.createRoomScreen = createRoomScreen;
     }
-
 @Override
 public void run() {
     try {

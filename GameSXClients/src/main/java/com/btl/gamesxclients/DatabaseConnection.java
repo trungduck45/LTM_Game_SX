@@ -63,8 +63,9 @@ public class DatabaseConnection {
                 statement.setInt(1, roomId);
                 ResultSet resultSet = statement.executeQuery();
                 if (resultSet.next()) {
-                    int player1Id = resultSet.getInt("player1_id");
-                    int player2Id = resultSet.getInt("player2_id");
+                    String player1Id = resultSet.getString("player1_id");
+                    String player2Id = resultSet.getString("player2_id");
+
 
                     playerIds = player1Id + ":" +  player2Id;
                 } else {

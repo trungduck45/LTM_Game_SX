@@ -221,7 +221,7 @@ public class GameSXServer {
 
             try {
                 // Truy vấn cơ sở dữ liệu để lấy thông tin phòng dựa trên roomId
-                String query = "SELECT room_id, room_name, status FROM rooms WHERE room_id = ?";
+                String query = "SELECT player1_id, player2_id FROM rooms WHERE id = ?";
                 PreparedStatement statement = dbConnection.prepareStatement(query);
                 statement.setString(1, roomId);
 
@@ -229,9 +229,11 @@ public class GameSXServer {
 
                 if (resultSet.next()) {
                     // Lấy thông tin phòng và trả về cho client
-                    String roomName = resultSet.getString("room_name");
-                    String status = resultSet.getString("status");
-                    out.println("ROOM_INFO " + roomId + " " + roomName + " " + status);
+                    String player1Id = resultSet.getString("player1_id");
+                    String player2Id = resultSet.getString("player2_id");
+
+                    out.println("ROOM_INFO:" + roomId + " " + player1Id + " " + player2Id);
+                    System.out.println("ROOM_INFO:" + roomId + " " + player1Id + " " + player2Id);
                 } else {
                     out.println("ERROR: Room not found");
                 }
@@ -293,6 +295,7 @@ public class GameSXServer {
                             stmt2.setString(1, userId);
                             stmt2.setString(2, roomId);
                             stmt2.executeUpdate();
+
                             out.println("JOIN_SUCCESS");
                             //startGame();
                             broadcast("PLAYER_JOIN");
