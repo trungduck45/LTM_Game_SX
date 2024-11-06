@@ -14,7 +14,7 @@ public class GameSXServer {
     private static final int PORT = 12345;
     private static List<ClientHandler> clients = new ArrayList<>();
     private static Connection dbConnection;
-    private static int check=0;
+    private static int check=1;
     private static String roomIdplay;
     public static void main(String[] args) {
         try {
@@ -79,14 +79,17 @@ public class GameSXServer {
                 } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
                     handleGetAllUsers();
                 } 
-//                else if (request.equals("STARTGAME")) { // Xử lý yêu cầu GET_ALL_USERS
-//                    startGame();
-//                    System.out.println("bắt đầu game:");
-//                }
+                else if (request.equals("STARTGAME")) { // Xử lý yêu cầu GET_ALL_USERS
+                    startGame();
+                    System.out.println("bắt đầu game:");
+                }
+                else if (request.startsWith("GET_ROOM")) {
+                    handleGetRoom(request);
+                }
                 else {
                     // Handle other requests (e.g., game logic)
                     username = request;
-                    startGame();
+                  //  startGame();
                 }
 
             } catch (IOException e) {
@@ -207,6 +210,40 @@ public class GameSXServer {
             }
         }
 
+        private void handleGetRoom(String request) {
+            // Lấy roomId từ request
+            String[] parts = request.split(" ");
+            if (parts.length < 2) {
+                out.println("ERROR: Room ID required");
+                return;
+            }
+            String roomId = parts[1];
+
+            try {
+                // Truy vấn cơ sở dữ liệu để lấy thông tin phòng dựa trên roomId
+                String query = "SELECT room_id, room_name, status FROM rooms WHERE room_id = ?";
+                PreparedStatement statement = dbConnection.prepareStatement(query);
+                statement.setString(1, roomId);
+
+                ResultSet resultSet = statement.executeQuery();
+
+                if (resultSet.next()) {
+                    // Lấy thông tin phòng và trả về cho client
+                    String roomName = resultSet.getString("room_name");
+                    String status = resultSet.getString("status");
+                    out.println("ROOM_INFO " + roomId + " " + roomName + " " + status);
+                } else {
+                    out.println("ERROR: Room not found");
+                }
+
+                resultSet.close();
+                statement.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                out.println("ERROR: Database error");
+            }
+        }
+
         private void handleGetUserProfile(String request) {
             String[] parts = request.split(" ");
             if (parts.length == 2) {
@@ -257,8 +294,9 @@ public class GameSXServer {
                             stmt2.setString(2, roomId);
                             stmt2.executeUpdate();
                             out.println("JOIN_SUCCESS");
+                            //startGame();
                             broadcast("PLAYER_JOIN");
-                            startGame();
+
                         } else {
                             out.println("ROOM_FULL");
                         }
@@ -365,7 +403,7 @@ public class GameSXServer {
                 i++;
             }
             message.setLength(message.length()-1);
-            
+    //        out.println("ListNumberAndWord:" + message );
             if(check == 1){
                 out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
                 System.out.println("send message to client: "+ message );

@@ -4,16 +4,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.Scanner;
 
 public class CreateRoomScreen extends JFrame {
     private final String userId;
     private final String roomId;
     private Socket socket;
     private PrintWriter out;
-    private Scanner in;
+    private BufferedReader in;
 
     public CreateRoomScreen(String userId, String roomId) {
         this.userId = userId;
@@ -58,7 +58,7 @@ public class CreateRoomScreen extends JFrame {
         try {
             socket = new Socket("localhost", 12345);
             out = new PrintWriter(socket.getOutputStream(), true);
-            in = new Scanner(socket.getInputStream());
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         } catch (IOException e) {
             e.printStackTrace();
             JOptionPane.showMessageDialog(this, "Error connecting to server.");
@@ -68,15 +68,22 @@ public class CreateRoomScreen extends JFrame {
     private void startListeningForEvents() {
         new Thread(() -> {
             while (true) {
-                if (in.hasNextLine()) {
-                    String response = in.nextLine();
+                try {
+                    String response = in.readLine();
                     if ("PLAYER_JOIN".equals(response)) {
-                        SwingUtilities.invokeLater(() -> {
-                            new GameScreen("localhost", userId,roomId).setVisible(true);
-                            dispose();
-                        });
+                        out.println("STARTGAME");
+                        new Thread(new ServerListener(in, this)).start();
+
+//                         SwingUtilities.invokeLater(() -> {
+//                            new GameScreen("localhost", userId, roomId).setVisible(true);
+//                            dispose();
+//                        });
                         break;
                     }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(this, "Error reading from server.");
+                    break;
                 }
             }
         }).start();
@@ -85,13 +92,13 @@ public class CreateRoomScreen extends JFrame {
     private void deleteRoom() {
         try (Socket socket = new Socket("localhost", 12345);
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-             Scanner in = new Scanner(socket.getInputStream())) {
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
             // Send delete room request to the server
             out.println("DELETE_ROOM " + userId);
 
             // Read server response
-            String response = in.nextLine();
+            String response = in.readLine();
             if (!"DELETE_ROOM_SUCCESS".equals(response)) {
                 JOptionPane.showMessageDialog(this, "Failed to delete room.");
             }

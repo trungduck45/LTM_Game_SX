@@ -33,7 +33,7 @@ public class GameScreen extends JFrame {
     private int currentLevelValue = 1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
-    public GameScreen(String serverAddress, String userId,String roomId) {
+    public GameScreen(String serverAddress, String userId , String roomId , String userIdDoiThu) {
         this.userId = userId;
         try {
             Socket socket = new Socket(serverAddress, 12345);
@@ -45,8 +45,9 @@ public class GameScreen extends JFrame {
             DatabaseConnection dbConnection = new DatabaseConnection();
             String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt( roomId));
             System.out.println("Lấy ra từ DB:" + listNumWord);
-            initGameUI(userId,roomId);
-            new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
+
+            initGameUI(userId,roomId,userIdDoiThu);
+           // new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Không thể kết nối đến server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -55,22 +56,29 @@ public class GameScreen extends JFrame {
     }
 
 
-    private void initGameUI(String userId,String roomId) {
+    private void initGameUI(String userId,String roomId, String userIdDoiThu) {
         setTitle("Phòng chơi số "+roomId);
         setSize(500, 300);
         setLayout(new BorderLayout());
         // Fetch user profile
-        UserProfile userProfile = UserProfileService.getUserProfile(userId);
+        UserProfile userProfile1 = UserProfileService.getUserProfile(userId);
+        UserProfile userProfile2 = UserProfileService.getUserProfile(userIdDoiThu);
+
+
 
         currentLevel = new JLabel("Màn " + currentLevelValue, SwingConstants.CENTER);
 
         timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
 
-        ingameNameLabel = new JLabel("In-game Name: " + userProfile.getIngameName());
+        ingameNameLabel = new JLabel("In-game Name: " + userProfile1.getIngameName());
         ingameNameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
         scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
+
+        ingameNameLabel = new JLabel("In-game Name DOi THU: " + userProfile2.getIngameName());
+        ingameNameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
         serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         serverRow.add(new JLabel("Server Row"));

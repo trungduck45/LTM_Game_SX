@@ -9,6 +9,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Optional;
 
 public class DatabaseConnection {
    private static final String URL = "jdbc:mysql://localhost:3306/gamesx";  // Thay thế bằng URL của cơ sở dữ liệu
@@ -52,5 +53,27 @@ public class DatabaseConnection {
             e.printStackTrace();
         }
         return listNumWord; // Trả về dữ liệu lấy được
+    }
+    public String getListUserDatabase(int roomId) {
+        String playerIds = null;
+
+        try (Connection connection = DriverManager.getConnection(URL, USER, PASSWORD)) {
+            String sql = "SELECT player1_id, player2_id FROM rooms WHERE id = ?";
+            try (PreparedStatement statement = connection.prepareStatement(sql)) {
+                statement.setInt(1, roomId);
+                ResultSet resultSet = statement.executeQuery();
+                if (resultSet.next()) {
+                    int player1Id = resultSet.getInt("player1_id");
+                    int player2Id = resultSet.getInt("player2_id");
+
+                    playerIds = player1Id + ":" +  player2Id;
+                } else {
+                    System.out.println("Không tìm thấy phòng với id: " + roomId);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return playerIds;
     }
 }

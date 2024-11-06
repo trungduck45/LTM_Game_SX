@@ -5,10 +5,13 @@ import java.awt.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.Optional;
 import java.util.Scanner;
 
 public class JoinRoomScreen extends JFrame {
     private final String userId;
+    private String player1;
+    private String player2;
 
     public JoinRoomScreen(String userId) {
         this.userId = userId;
@@ -63,6 +66,25 @@ public class JoinRoomScreen extends JFrame {
     }
 
     private void joinRoom(String roomId, JLabel messageLabel) {
+        DatabaseConnection dbConnection = new DatabaseConnection();
+        String users = dbConnection.getListUserDatabase(Integer.parseInt(roomId));
+        System.out.println("Từ room :" + roomId + " Lấy ra từ DB các user: " + users);
+
+        if (!users.isEmpty()) {
+            // Split the IDs and handle cases where only one ID might be present
+            String[] userIds = users.split(":");
+
+            player1 = (userIds.length > 0) ? userIds[0] : "N/A";
+            player2 = (userIds.length > 1) ? userIds[1] : "N/A";
+
+            System.out.println("Player 1 ID: " + player1);
+            System.out.println("Player 2 ID: " + player2);
+        } else {
+            System.out.println("No user IDs found for room ID: " + roomId);
+        }
+
+
+        //if( player1 == userId )
         try (Socket socket = new Socket("localhost", 12345);
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
              Scanner in = new Scanner(socket.getInputStream())) {
@@ -74,11 +96,16 @@ public class JoinRoomScreen extends JFrame {
             String response = in.nextLine();
             if ("JOIN_SUCCESS".equals(response)) {
                 messageLabel.setText("Joined room successfully.");
-               // out.println("STARTGAME");
+
                 SwingUtilities.invokeLater(() -> {
-                    new GameScreen("localhost", userId, roomId).setVisible(true);
+                    new GameScreen("localhost", player1, roomId , player2).setVisible(true);
                     dispose();
                 });
+                SwingUtilities.invokeLater(() -> {
+                    new GameScreen("localhost", player2, roomId , player1).setVisible(true);
+                    dispose();
+                });
+
             } else if ("ROOM_FULL".equals(response)) {
                 messageLabel.setText("Room is full.");
             } else if ("ROOM_NOT_FOUND".equals(response)) {
