@@ -34,7 +34,7 @@ public class GameScreen extends JFrame {
     private int currentLevelValue = 1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
-    public GameScreen(String serverAddress, String userId , String roomId , String userIdDoiThu) {
+    public GameScreen(String serverAddress, String userId , String roomId , String userIdDoiThu, String message) {
         this.userId = userId;
         try {
             Socket socket = new Socket(serverAddress, 12345);
@@ -43,9 +43,9 @@ public class GameScreen extends JFrame {
 
             out.println(userId); // Gửi tên người chơi tới server
 
-            DatabaseConnection dbConnection = new DatabaseConnection();
-            String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt( roomId));
-            System.out.println("Lấy ra từ DB:" + listNumWord);
+//            DatabaseConnection dbConnection = new DatabaseConnection();
+//            String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt( roomId));
+         System.out.println("Dãy cần SX:" + message);
 
             initGameUI(userId,roomId,userIdDoiThu);
            // new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
@@ -174,8 +174,6 @@ public class GameScreen extends JFrame {
         serverRow.removeAll();
         inputRow.removeAll();
         inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
-
-
         // Tạo nhãn hiển thị
         JLabel serverLabel = new JLabel(word);
         serverRow.add(serverLabel);
@@ -231,13 +229,10 @@ public class GameScreen extends JFrame {
         }
         increaseLevel();
     }
-
-
     private void startTimer() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
-
         remainingTime = 21; // Thời gian đếm ngược
         timerLabel.setText("Thời gian: " + remainingTime + "s"); // Cập nhật nhãn thời gian
 

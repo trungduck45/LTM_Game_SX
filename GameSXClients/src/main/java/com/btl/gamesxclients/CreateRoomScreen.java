@@ -10,12 +10,13 @@ import java.net.Socket;
 
 public class CreateRoomScreen extends JFrame {
     private final String userId;
-    private final String roomId;
+    private String roomId;
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
     private  String player1;
     private  String player2;
+    private  String message;
 
     public CreateRoomScreen(String userId, String roomId) {
         this.userId = userId;
@@ -73,26 +74,22 @@ public class CreateRoomScreen extends JFrame {
                 try {
                     String response = in.readLine();
                     if ("PLAYER_JOIN".equals(response)) {
-                        out.println("STARTGAME");
-                        new Thread(new ServerListener(in, this)).start();
-                        DatabaseConnection dbConnection = new DatabaseConnection();
-                        String users = dbConnection.getListUserDatabase(Integer.parseInt(roomId));
-                        System.out.println("Từ room :" + roomId + " Lấy ra từ DB các user: " + users);
-
-                        if (!users.isEmpty()) {
-                            // Split the IDs and handle cases where only one ID might be present
-                            String[] userIds = users.split(":");
-
-                            player1 = (userIds.length > 0) ? userIds[0] : "N/A";
-                            player2 = (userIds.length > 1) ? userIds[1] : "N/A";
-                            System.out.println("Player 1 ID: " + player1);
-                          //  System.out.println("Player 2 ID: " + player2);
+                        out.println("GET_ROOM "+ roomId);
+                        String response_room = in.readLine();
+                        if (response_room != null && response_room.startsWith("ROOM_INFO:")) {
+                            String rs = response_room.substring(10);
+                            String[] rooms = rs.split(" ");
+                            player1 = rooms[2];
+                            player2 = rooms[3];
+                            message = rooms[4];
+                            System.out.println(player1+"/"+message);
                         } else {
-                            System.out.println("No user IDs found for room ID: " + roomId);
+                            System.out.println("Unexpected server response: " + response_room);
+                            JOptionPane.showMessageDialog(this, "Failed to retrieve room information.");
+                            break;
                         }
-
                         SwingUtilities.invokeLater(() -> {
-                            new GameScreen("localhost", player1, roomId , player2).setVisible(true);
+                            new GameScreen("localhost", player1, roomId , player2, message).setVisible(true);
                             dispose();
                         });
                         break;

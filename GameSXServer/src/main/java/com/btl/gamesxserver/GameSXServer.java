@@ -76,23 +76,18 @@ public class GameSXServer {
                     handleCreateRoom(request);
                 } else if (request.startsWith("DELETE_ROOM")) {
                     handleDeleteRoom(request);
-                } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
+                } else if (request.equals("GET_ALL_USERS")) {
                     handleGetAllUsers();
-                } 
-                else if (request.equals("STARTGAME")) { // Xử lý yêu cầu GET_ALL_USERS
-                    startGame();
-                    System.out.println("bắt đầu game:");
-                }
-                else if (request.startsWith("GET_ROOM")) {
+                } else if (request.startsWith("START_GAME")) {
+                    //System.out.println("tao danh sach:..........");
+                    startGame(request);
+                } else if (request.startsWith("GET_ROOM")) {
                     handleGetRoom(request);
-                }
-                else {
-                    // Handle other requests (e.g., game logic)
+                } else {
                     username = request;
-                  //  startGame();
                 }
 
-            } catch (IOException e) {
+            } catch (IOException  e) {
                 System.out.println("Client disconnected: " + socket.getInetAddress());
             } finally {
                 try {
@@ -221,7 +216,7 @@ public class GameSXServer {
 
             try {
                 // Truy vấn cơ sở dữ liệu để lấy thông tin phòng dựa trên roomId
-                String query = "SELECT player1_id, player2_id FROM rooms WHERE id = ?";
+                String query = "SELECT player1_id, player2_id, message FROM rooms WHERE id = ?";
                 PreparedStatement statement = dbConnection.prepareStatement(query);
                 statement.setString(1, roomId);
 
@@ -231,9 +226,10 @@ public class GameSXServer {
                     // Lấy thông tin phòng và trả về cho client
                     String player1Id = resultSet.getString("player1_id");
                     String player2Id = resultSet.getString("player2_id");
+                    String message = resultSet.getString("message");
 
-                    out.println("ROOM_INFO:" + roomId + " " + player1Id + " " + player2Id);
-                    System.out.println("ROOM_INFO:" + roomId + " " + player1Id + " " + player2Id);
+                    out.println("ROOM_INFO: " + roomId + " " + player1Id + " " + player2Id +" "+ message);
+                    System.out.println("ROOM_INFO:" + roomId + " " + player1Id + " " + player2Id + " " + message);
                 } else {
                     out.println("ERROR: Room not found");
                 }
@@ -297,9 +293,10 @@ public class GameSXServer {
                             stmt2.executeUpdate();
 
                             out.println("JOIN_SUCCESS");
-                            //startGame();
-                            broadcast("PLAYER_JOIN");
+                            startGame("START_GAME " + roomId);
 
+                            broadcast("PLAYER_JOIN");
+                            //handleGetRoom("GET_ROOM "+roomId);
                         } else {
                             out.println("ROOM_FULL");
                         }
@@ -390,13 +387,17 @@ public class GameSXServer {
             }
         }
 
-        private void startGame()  {
+        private void startGame(String request) throws IOException {
+            // Lấy roomId từ request
+            String[] parts = request.split(" ");
+            if (parts.length < 2) {
+                out.println("ERROR: Room ID required");
+                return;
+            }
+            String roomId = parts[1];
             StringBuilder message = new StringBuilder();
-            message.append(roomIdplay);
-            message.append("/");
             int i=0;
             while( i<10){
-                // Quyết định ngẫu nhiên giữa dãy số và từ
                 if (new Random().nextBoolean()) {
                     message.append(generateRandomNumbers());
                 } else {
@@ -406,53 +407,24 @@ public class GameSXServer {
                 i++;
             }
             message.setLength(message.length()-1);
-            out.println("ListNumberAndWord:" + message );
-            System.out.println("send message to client: "+ message );
-//            if(check == 1){
-//                out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
-//                System.out.println("send message to client: "+ message );
-//                check = 0;
-//            } else {
-//                check = 1;
-//            }
-//
+            System.out.println("create message : "+ message );
+            try{
+                PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE rooms SET message = ? WHERE id = ?");
+                stmt2.setString(1, String.valueOf(message));
+                stmt2.setString(2, roomId);
+                stmt2.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                out.println("ROOM_NOT_FOUND");
+            }
+
+            handleGetRoom("GET_ROOM "+roomId);
             try {
                 socket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-
-//        private void playNumberGame() throws IOException {
-//            List<Integer> numbers = generateRandomNumbers();
-//
-//
-//            String sortedNumbers = in.readLine();  // Nhận dãy đã sắp xếp từ client
-//            List<Integer> userSorted = parseNumbers(sortedNumbers);
-//
-////            if (isSorted(userSorted, numbers)) {
-////                score += 10;
-////                out.println("SCORE: Correct Answer +10 points");
-////            } else {
-////                score -= 5;
-////                out.println("SCORE: Wrong Answer -5 points");
-////            }
-//        }
-
-//        private void playWordGame() throws IOException {
-//            String word = WORDS.get(new Random().nextInt(WORDS.size())); // Chọn từ ngẫu nhiên
-//            String shuffledWord = shuffleWord(word); // Đảo vị trí từ
-//            out.println("WORD:" + shuffledWord);  // Gửi từ bị đảo cho client
-//
-//            String userAnswer = in.readLine();  // Nhận từ đã sắp xếp từ client
-//            if (word.equals(userAnswer)) {
-//                score += 10;
-//                out.println("SCORE: Correct Answer +10 points");
-//            } else {
-//                score -= 5;
-//                out.println("SCORE: Wrong answer -5 points");
-//            }
-//        }
 
         private StringBuilder generateRandomNumbers() {
             Random random = new Random();
