@@ -406,15 +406,16 @@ public class GameSXServer {
                 i++;
             }
             message.setLength(message.length()-1);
-    //        out.println("ListNumberAndWord:" + message );
-            if(check == 1){
-                out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
-                System.out.println("send message to client: "+ message );
-                check = 0;
-            } else {
-                check = 1;
-            }
-            
+            out.println("ListNumberAndWord:" + message );
+            System.out.println("send message to client: "+ message );
+//            if(check == 1){
+//                out.println("ListNumberAndWord:" + message );  // Gửi dãy số cho client
+//                System.out.println("send message to client: "+ message );
+//                check = 0;
+//            } else {
+//                check = 1;
+//            }
+//
             try {
                 socket.close();
             } catch (IOException e) {

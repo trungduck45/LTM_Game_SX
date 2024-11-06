@@ -86,7 +86,7 @@ public class CreateRoomScreen extends JFrame {
                             player1 = (userIds.length > 0) ? userIds[0] : "N/A";
                             player2 = (userIds.length > 1) ? userIds[1] : "N/A";
                             System.out.println("Player 1 ID: " + player1);
-                            System.out.println("Player 2 ID: " + player2);
+                          //  System.out.println("Player 2 ID: " + player2);
                         } else {
                             System.out.println("No user IDs found for room ID: " + roomId);
                         }

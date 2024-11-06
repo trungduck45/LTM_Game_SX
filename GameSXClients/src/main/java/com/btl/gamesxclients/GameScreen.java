@@ -100,9 +100,10 @@ public class GameScreen extends JFrame {
         mainPanel.add(serverRow);
         mainPanel.add(inputRow);
         mainPanel.add(ingameNameLabel);
-        mainPanel.add(ingameNameDThuLabel);
         mainPanel.add(timerPanel);
         mainPanel.add(scorePanel);
+
+        mainPanel.add(ingameNameDThuLabel);
 
         add(mainPanel, BorderLayout.CENTER);
 
