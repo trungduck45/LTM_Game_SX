@@ -155,13 +155,13 @@ public class WaitingRoomScreen extends JFrame {
 
                 // Gửi yêu cầu thách đấu tới backend
                 out.println("CHALLENGE " + selectedPlayerId + " " + userId);
-                JOptionPane.showMessageDialog(this, "Thách đấu với " + selectedPlayer + " đã được gửi!");
+//                JOptionPane.showMessageDialog(this, "Thách đấu với " + selectedPlayer + " đã được gửi!");
 
-                // Nhận phản hồi từ server
+//                 Nhận phản hồi từ server
                 String response = in.nextLine();
                 System.out.println(response);
                 if (response.startsWith("CHALLENGE_SENT")) {
-                    JOptionPane.showMessageDialog(this, "Challenge success.");
+                    System.out.println("okela");
                 } else if (response.startsWith("CHALLENGE_FAIL1")) {
                     JOptionPane.showMessageDialog(this, "Challenge failed. Please try again.");
                 }
@@ -171,9 +171,6 @@ public class WaitingRoomScreen extends JFrame {
             }
         } else if (response1 == JOptionPane.NO_OPTION) {
             // Gọi hàm deleteRoom nếu người dùng chọn No
-            deleteRoom(userId); // Giả sử bạn có ID người chơi hoặc thông tin cần thiết
-        } else if (response1 == JOptionPane.CANCEL_OPTION || response1 == JOptionPane.CLOSED_OPTION) {
-            // Không làm gì nếu người dùng chọn Cancel hoặc đóng hộp thoại
             JOptionPane.showMessageDialog(this, "Thách đấu đã bị hủy.");
         }
     }

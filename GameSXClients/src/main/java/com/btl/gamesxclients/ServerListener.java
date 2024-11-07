@@ -32,18 +32,18 @@ public class ServerListener implements Runnable, AutoCloseable {
     @Override
     public void run() {
         try {
-            // Nếu sử dụng BufferedReader
             if (in != null) {
+                System.out.println("Listening to server using BufferedReader");
                 String message;
                 while ((message = in.readLine()) != null) {
+                    System.out.println("Received message via BufferedReader: " + message);
                     processMessage(message);
                 }
-            }
-
-            // Nếu sử dụng Scanner
-            if (scanner != null) {
+            } else if (scanner != null) {
+                System.out.println("Listening to server using Scanner");
                 while (scanner.hasNextLine()) {
                     String message = scanner.nextLine();
+                    System.out.println("Received message via Scanner: " + message);
                     processMessage(message);
                 }
             }
@@ -51,6 +51,7 @@ public class ServerListener implements Runnable, AutoCloseable {
             e.printStackTrace();
         }
     }
+
 
     private void processMessage(String message) {
         System.out.println("Nhận được từ server: " + message);  // Log để kiểm tra
@@ -69,6 +70,7 @@ public class ServerListener implements Runnable, AutoCloseable {
             gameScreen.updateServerWord(word);
         } else if (message.startsWith("CHALLENGE_REQUEST_FROM")) {
             // Xử lý yêu cầu thách đấu
+            System.out.println("HAHAHA NGON NGON ĐI NGỦ");
             String challengerId = message.split(" ")[1]; // Giả sử format là "CHALLENGE_REQUEST_FROM [challengerId]"
             receiveChallenge(challengerId); // Gọi hàm xử lý thách đấu
         }

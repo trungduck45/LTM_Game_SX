@@ -77,7 +77,7 @@ public class GameSXServer {
                     handleDeleteRoom(request);
                 } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
                     handleGetAllUsers();
-                } else if (request.equals("CHALLENGE")) {
+                } else if (request.startsWith("CHALLENGE")) {
                     handleChallenge(request);
                 } else {
                     // Handle other requests (e.g., game logic)
@@ -153,6 +153,7 @@ public class GameSXServer {
                                 updateStatusStmt.setString(1, username);
                                 updateStatusStmt.executeUpdate();
 
+                                this.username = username;
                                 // Gửi phản hồi đăng nhập thành công
                                 out.println("LOGIN_SUCCESS " + userId + " " + ingameName);
                             } else {
@@ -346,15 +347,27 @@ public class GameSXServer {
             if (parts.length == 3) {
                 String challengerName = parts[2];
                 String targetUsername = parts[1];
+                System.out.println("Target username: " + targetUsername);
+                System.out.println("Challenger name: " + challengerName);
+
+                System.out.println("List of connected users:");
+                for (ClientHandler client : clients) {
+                    System.out.println(client.username);
+                }
+
 
                 try {
                     boolean targetFound = false;
                     for (ClientHandler client : clients) {
                         if (client.username != null && client.username.equals(targetUsername)) {
                             targetFound = true;
+                            System.out.println("Target found: " + client.username); // Kiểm tra target đã tìm thấy
                             if (client.socket.isConnected()) {
                                 // Gửi yêu cầu thách đấu cho người chơi mục tiêu
+                                System.out.println("Sending challenge to " + client.username);
                                 client.out.println("CHALLENGE_REQUEST_FROM " + challengerName);
+                                client.out.flush();
+                                System.out.println("Challenge sent to " + targetUsername);
                                 out.println("CHALLENGE_SENT " + targetUsername);
                             } else {
                                 out.println("CHALLENGE_FAIL1 Target user is not online.");
