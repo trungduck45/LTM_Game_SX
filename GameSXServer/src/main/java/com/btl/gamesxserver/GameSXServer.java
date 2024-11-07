@@ -19,7 +19,7 @@ public class GameSXServer {
     public static void main(String[] args) {
         try {
             // Initialize database connection
-            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "letrungduc45");
+            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "dong1808");
 
             try (ServerSocket serverSocket = new ServerSocket(PORT)) {
                 System.out.println("Server is running...");
