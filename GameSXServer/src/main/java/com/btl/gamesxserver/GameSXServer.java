@@ -462,31 +462,7 @@ public class GameSXServer {
             }
         }
 
-        private boolean isSorted(List<Integer> list, List<Integer> originalList) {
-            // Tạo bản sao của danh sách ban đầu để sắp xếp
-            List<Integer> ascendingList = new ArrayList<>(originalList);
-            List<Integer> descendingList = new ArrayList<>(originalList);
 
-            // Sắp xếp bản sao theo thứ tự tăng dần và giảm dần
-            Collections.sort(ascendingList);
-            Collections.sort(descendingList, Collections.reverseOrder());
-
-            // Kiểm tra xem danh sách đầu vào có khớp với bản sao đã sắp xếp không
-            return list.equals(ascendingList) || list.equals(descendingList);
-        }
-
-        private List<Integer> ChuyenVeDayNumbers(String input) {
-            List<Integer> numbers = new ArrayList<>();
-            try {
-                String[] parts = input.split(",");
-                for (String part : parts) {
-                    numbers.add(Integer.parseInt(part.trim()));
-                }
-            } catch (NumberFormatException e) {
-                out.println("ERROR: Invalid input. Please enter numbers separated by commas.");
-            }
-            return numbers;
-        }
 
     }
 

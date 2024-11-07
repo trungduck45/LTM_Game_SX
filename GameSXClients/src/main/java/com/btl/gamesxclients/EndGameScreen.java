@@ -1,17 +1,14 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.btl.gamesxclients;
 
 import javax.swing.*;
 import java.awt.*;
-
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class EndGameScreen extends JFrame {
     public EndGameScreen(String username, int score) {
         setTitle("Kết thúc trò chơi");
-         setSize(500, 300);
+        setSize(500, 300);
         setLayout(new BorderLayout());
 
         // Hiển thị tên người chơi và điểm
@@ -34,10 +31,20 @@ public class EndGameScreen extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null); // Hiển thị ở giữa màn hình
+
+        // Timer to close the screen after 5 seconds
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                exit(); // Call exit after 5 seconds
+            }
+        }, 5000); // 5000 milliseconds = 5 seconds
+
+        setVisible(true); // Show the frame
     }
+
     private void exit() {
-         
-        dispose(); 
-       
+        dispose(); // Close the frame
     }
 }
