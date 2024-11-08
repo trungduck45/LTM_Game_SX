@@ -97,7 +97,6 @@ public class JoinRoomScreen extends JFrame {
                     dispose();
                 });
 
-
             } else if ("ROOM_FULL".equals(response)) {
                 messageLabel.setText("Room is full.");
             } else if ("ROOM_NOT_FOUND".equals(response)) {
