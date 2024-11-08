@@ -344,47 +344,52 @@ public class GameSXServer {
         private void handleChallenge(String request) {
             String[] parts = request.split(" ");
 
-            if (parts.length == 3) {
+            if (parts.length == 4) {
+                String roomId = parts[3];
                 String challengerName = parts[2];
                 String targetUsername = parts[1];
-                System.out.println("Target username: " + targetUsername);
-                System.out.println("Challenger name: " + challengerName);
+//                System.out.println("Target username: " + targetUsername);
+//                System.out.println("Challenger name: " + challengerName);
 
-                System.out.println("List of connected users:");
-                for (ClientHandler client : clients) {
-                    if(client.username != null){
-                        System.out.println(client.username);
-                    }
+//                System.out.println("List of connected users:");
+//                for (ClientHandler client : clients) {
+//                    if(client.username != null){
+//                        System.out.println(client.username);
+//                    }
+//
+//                }
 
-                }
 
-
-                try {
-                    boolean targetFound = false;
-                    for (ClientHandler client : clients) {
-                        if (client.username != null && client.username.equals(targetUsername)) {
-                            targetFound = true;
-                            System.out.println("Target found: " + client.username); // Kiểm tra target đã tìm thấy
-                            if (client.socket.isConnected()) {
-                                // Gửi yêu cầu thách đấu cho người chơi mục tiêu
-                                System.out.println("Sending challenge to " + client.username);
-                                client.out.println("CHALLENGE_REQUEST_FROM " + challengerName);
-                                client.out.flush();
-                                System.out.println("Challenge sent to " + targetUsername);
-                                out.println("CHALLENGE_SENT " + targetUsername);
-                            } else {
-                                out.println("CHALLENGE_FAIL1 Target user is not online.");
-                            }
-                            break;
-                        }
-                    }
-                    if (!targetFound) {
-                        out.println("CHALLENGE_FAIL User not found.");
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    out.println("CHALLENGE_FAIL An error occurred.");
-                }
+//                try {
+//                    boolean targetFound = false;
+//                    for (ClientHandler client : clients) {
+//                        if (client.username != null && client.username.equals(targetUsername)) {
+//                            targetFound = true;
+//                            System.out.println("Target found: " + client.username); // Kiểm tra target đã tìm thấy
+//                            if (client.socket.isConnected()) {
+//                                // Gửi yêu cầu thách đấu cho người chơi mục tiêu
+//                                System.out.println("Sending challenge to " + client.username);
+//                                client.out.println("CHALLENGE_REQUEST_FROM " + challengerName);
+//                                client.out.flush();
+//                                System.out.println("Challenge sent to " + targetUsername);
+//                                out.println("CHALLENGE_SENT " + targetUsername);
+//                            } else {
+//                                out.println("CHALLENGE_FAIL1 Target user is not online.");
+//                            }
+//                            break;
+//                        }
+//                    }
+//                    if (!targetFound) {
+//                        out.println("CHALLENGE_FAIL User not found.");
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    out.println("CHALLENGE_FAIL An error occurred.");
+//                }
+//                System.out.println("Client1");
+//                out.println("CHALLENGE_SENT" + targetUsername);
+                System.out.println("Client2");
+                broadcast("CHALLENGE_TO:" + targetUsername + " " + challengerName + " " + roomId);
             } else {
                 out.println("CHALLENGE_FAIL Invalid request format.");
             }
@@ -509,4 +514,5 @@ public class GameSXServer {
         }
 
     }
+
 }
