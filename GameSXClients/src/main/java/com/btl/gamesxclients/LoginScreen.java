@@ -32,7 +32,7 @@ public class LoginScreen extends JFrame {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.EAST;
 
-        JLabel usernameLabel = new JLabel("Tên đăng nhập:");
+        JLabel usernameLabel = new JLabel("Usernam:");
         inputPanel.add(usernameLabel, gbc);
 
         gbc.gridx = 1;
@@ -41,7 +41,7 @@ public class LoginScreen extends JFrame {
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        JLabel passwordLabel = new JLabel("Mật khẩu:");
+        JLabel passwordLabel = new JLabel("Password:");
         inputPanel.add(passwordLabel, gbc);
 
         gbc.gridx = 1;

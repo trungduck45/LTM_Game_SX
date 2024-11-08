@@ -4,11 +4,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
-import  java.util.Scanner;
 import java.util.Timer;
-import java.util.TimerTask;
 
 
 public class GameScreen extends JFrame {
@@ -18,6 +16,10 @@ public class GameScreen extends JFrame {
     private PrintWriter out;
     private BufferedReader in;
     private final String userId;
+
+    private  String DayCanSXSUM;
+    private  String DaycanSX;
+    private  String roomId;
 
     private JLabel scoreLabel;
     private int scoreSum = 0;
@@ -34,6 +36,9 @@ public class GameScreen extends JFrame {
     private int currentLevelValue = 1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
+    private static final List<String> WORDS = Arrays.asList("apple", "banana", "orange", "grape", "mango");
+
+
     public GameScreen(String serverAddress, String userId , String roomId , String userIdDoiThu, String message) {
         this.userId = userId;
         try {
@@ -41,23 +46,17 @@ public class GameScreen extends JFrame {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             out = new PrintWriter(socket.getOutputStream(), true);
 
-            out.println(userId); // Gửi tên người chơi tới server
+            System.out.println("Dãy cần SX:" + message);
+            this.roomId= roomId;
+            initGameUI(userId, roomId, userIdDoiThu, message);
 
-//            DatabaseConnection dbConnection = new DatabaseConnection();
-//            String listNumWord = dbConnection.getListNumWordFromDatabase(Integer.parseInt( roomId));
-         System.out.println("Dãy cần SX:" + message);
-
-            initGameUI(userId,roomId,userIdDoiThu);
-           // new Thread(new ServerListener(in, this)).start(); // Lắng nghe dữ liệu từ server
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Không thể kết nối đến server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         }
     }
-
-
-    private void initGameUI(String userId,String roomId, String userIdDoiThu) {
+    private void initGameUI(String userId,String roomId, String userIdDoiThu,String question) {
         setTitle("Phòng chơi số "+roomId);
         setSize(500, 300);
         setLayout(new BorderLayout());
@@ -65,21 +64,16 @@ public class GameScreen extends JFrame {
         UserProfile userProfile1 = UserProfileService.getUserProfile(userId);
         UserProfile userProfile2 = UserProfileService.getUserProfile(userIdDoiThu);
 
-
-
         currentLevel = new JLabel("Màn " + currentLevelValue, SwingConstants.CENTER);
+        add(currentLevel, BorderLayout.NORTH);
 
-        timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
+        ingameNameLabel = new JLabel("Bạn: " + userProfile1.getIngameName());
+        ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(25, 25, 0, 25));
+        ingameNameDThuLabel = new JLabel("Đối thủ: " + userProfile2.getIngameName());
+        JPanel namePanel = new JPanel(new FlowLayout());
+        namePanel.add(ingameNameLabel);
 
-        ingameNameLabel = new JLabel("In-game Name: " + userProfile1.getIngameName());
-        ingameNameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
-
-        scoreLabel = new JLabel("Điểm: 0", SwingConstants.CENTER);
-
-        ingameNameDThuLabel = new JLabel("In-game Name DOi THU: " + userProfile2.getIngameName());
-        ingameNameDThuLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        ingameNameDThuLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
+        namePanel.add(ingameNameDThuLabel);
 
         serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         serverRow.add(new JLabel("Server Row"));
@@ -87,28 +81,26 @@ public class GameScreen extends JFrame {
         inputRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
         inputRow.add(new JLabel("Input Row"));
 
+        timerLabel = new JLabel("Thời gian: 20s", SwingConstants.CENTER);
         JPanel timerPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         timerPanel.add(timerLabel);
 
+        scoreLabel = new JLabel("Điểm: " + scoreSum, SwingConstants.CENTER);
         JPanel scorePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         scorePanel.add(scoreLabel);
 
         JPanel mainPanel = new JPanel();
         mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
-
-        mainPanel.add(currentLevel);
+        mainPanel.add(namePanel);
         mainPanel.add(serverRow);
         mainPanel.add(inputRow);
-        mainPanel.add(ingameNameLabel);
         mainPanel.add(timerPanel);
         mainPanel.add(scorePanel);
-
-        mainPanel.add(ingameNameDThuLabel);
 
         add(mainPanel, BorderLayout.CENTER);
 
         JButton sendButton = new JButton("Check");
-        sendButton.addActionListener(e -> sendDataToServer());
+        sendButton.addActionListener(e -> CheckDataAnswer());
 
         JButton exitButton = new JButton("Thoát Game");
         exitButton.addActionListener(e -> exitScreen());
@@ -121,24 +113,34 @@ public class GameScreen extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setVisible(true);
+        DayCanSXSUM = question;
+        String[] ListNumWord = question.split(";");
+        DaycanSX =ListNumWord[currentLevelValue-1];
+
+        if(DaycanSX.charAt(0) >='0' && DaycanSX.charAt(0)<='9' ){
+            String[] number = DaycanSX.split(",");
+            updateServerNumbers(number);
+        }else {
+            updateServerWord(DaycanSX);
+        }
+
+
     }
 
     private void increaseLevel() {
-        if (currentLevelValue < MAX_LEVELS) {
+        if (currentLevelValue  < MAX_LEVELS) {
        currentLevelValue++;
         currentLevel.setText("Màn " + currentLevelValue);
         } else {
             goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
         }
-    }   
-
+    }
 
     private void goToEndGameScreen() {
         dispose(); // Đóng cửa sổ GameScreen hiện tại
-        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText(), scoreSum);
+        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText(),roomId,userId,scoreSum);
         endGameScreen.setVisible(true);
     }
-
 
     public void updateServerNumbers(String[] numbers) {
         // Xóa các phần tử cũ trước khi thêm mới
@@ -194,17 +196,14 @@ public class GameScreen extends JFrame {
         startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
 
-    private void sendDataToServer() {
+    private void CheckDataAnswer() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm khi người dùng nhấn Check
         }
-
         try {
             StringBuilder inputData = new StringBuilder();
-
             // Lấy dữ liệu từ các ô nhập liệu
             for (JTextField field : inputFields) {
-
                 String text = field.getText().trim();
                 if (text.length() < 1) {
                     text = "0";
@@ -215,14 +214,44 @@ public class GameScreen extends JFrame {
                 }
                 inputData.append(text).append(",");
             }
-
             // Xóa dấu phẩy cuối cùng
             if (inputData.length() > 0) {
                 inputData.setLength(inputData.length() - 1);
             }
+            String DayDaSX= String.valueOf(inputData);
+            System.out.println("day ban dau: " + DaycanSX);
+            System.out.println("cau tra loi: " + DayDaSX );
+            int ok=1;
+            if(DaycanSX.charAt(0) >='0' && DaycanSX.charAt(0)<='9' ){
+                if(isSorted(ChuyenVeDayNumbers(DayDaSX),ChuyenVeDayNumbers(DaycanSX))){
+                    scoreSum += 10;
+                } else{
+                    scoreSum -= 5;
+                }
+            }else{
+                for(String word : WORDS){
+                    if(DayDaSX.equals(word)){
+                        scoreSum += 10;
+                        ok = 0;
+                        break;
+                    }
+                }
+                if(ok==1) scoreSum -= 5;
+            }
+            //System.out.println("Diem : "+ scoreSum);
+            if(currentLevelValue<10) {
 
-            // Gửi dữ liệu tới server
-            out.println(inputData.toString());
+                scoreLabel.setText("Điểm: "+scoreSum);
+                String[] ListNumWord = DayCanSXSUM.split(";");
+                DaycanSX = ListNumWord[currentLevelValue];
+
+                if (DaycanSX.charAt(0) >= '0' && DaycanSX.charAt(0) <= '9') {
+                    String[] number = DaycanSX.split(",");
+                    updateServerNumbers(number);
+                } else {
+                    updateServerWord(DaycanSX);
+                }
+            }
 
         } catch (Exception e) {
             JOptionPane.showMessageDialog(this, "Đã xảy ra lỗi khi gửi dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -246,14 +275,12 @@ public class GameScreen extends JFrame {
 
                     if (remainingTime <= 0) {
                         timer.cancel(); // Hủy bộ đếm khi hết thời gian
-                        sendDataToServer(); // Tự động gửi dữ liệu và chuyển sang câu tiếp theo
+                        CheckDataAnswer(); // Tự động gửi dữ liệu và chuyển sang câu tiếp theo
                     }
                 });
             }
         }, 1000, 1000); // Thực hiện mỗi giây
     }
-
-
 
     private void deleteRoom() {
         try (Socket socket = new Socket("localhost", 12345);
@@ -284,9 +311,34 @@ public class GameScreen extends JFrame {
         // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
 
-    public void updateScore(String score) {
-        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
-        scoreSum = Integer.parseInt(score);
+//    public void updateScore(String score) {
+//        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
+//        scoreSum = Integer.parseInt(score);
+//    }
+    private boolean isSorted(List<Integer> list, List<Integer> originalList) {
+        // Tạo bản sao của danh sách ban đầu để sắp xếp
+        List<Integer> ascendingList = new ArrayList<>(originalList);
+        List<Integer> descendingList = new ArrayList<>(originalList);
+
+        // Sắp xếp bản sao theo thứ tự tăng dần và giảm dần
+        Collections.sort(ascendingList);
+        Collections.sort(descendingList, Collections.reverseOrder());
+
+        // Kiểm tra xem danh sách đầu vào có khớp với bản sao đã sắp xếp không
+        return list.equals(ascendingList) || list.equals(descendingList);
+    }
+
+    private List<Integer> ChuyenVeDayNumbers(String input) {
+        List<Integer> numbers = new ArrayList<>();
+        try {
+            String[] parts = input.split(",");
+            for (String part : parts) {
+                numbers.add(Integer.parseInt(part.trim()));
+            }
+        } catch (NumberFormatException e) {
+            out.println("ERROR: Invalid input. Please enter numbers separated by commas.");
+        }
+        return numbers;
     }
 
 

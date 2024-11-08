@@ -30,7 +30,7 @@ public class RegisterScreen extends JFrame {
         passwordField = new JPasswordField(15);
         ingameNameField = new JTextField(15);
         registerButton = new JButton("Register");
-        closeButton = new JButton("Đóng");
+        closeButton = new JButton("Quay lại");
         successLabel = new JLabel("");
 
         gbc.gridx = 0;
@@ -83,7 +83,7 @@ public class RegisterScreen extends JFrame {
     }
 
     private void exit(){
-        dispose();
+        dispose(); // Đóng cửa sổ GameScreen hiện tại
     }
     
     private void register() {

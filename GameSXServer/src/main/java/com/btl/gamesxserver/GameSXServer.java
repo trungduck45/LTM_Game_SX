@@ -83,6 +83,8 @@ public class GameSXServer {
                     startGame(request);
                 } else if (request.startsWith("GET_ROOM")) {
                     handleGetRoom(request);
+                } else if (request.startsWith("SEND_SCORE")) {
+                    handleSendScore(request);
                 } else {
                     username = request;
                 }
@@ -205,6 +207,118 @@ public class GameSXServer {
             }
         }
 
+        private void handleSendScore(String request) {
+            String[] parts = request.split(" ");
+            if (parts.length == 4) {
+                String roomId = parts[1];
+                String userId = parts[2];
+                String score_tmp = parts[3]; // Store score as a string
+                String score = userId+"/"+score_tmp;
+                try {
+                    // Query the current state of `score_1` and `score_2` for the specified room
+                    PreparedStatement checkStmt = dbConnection.prepareStatement(
+                            "SELECT score_1, score_2 FROM rooms WHERE id = ?"
+                    );
+                    checkStmt.setInt(1, Integer.parseInt(roomId));
+                    ResultSet rs = checkStmt.executeQuery();
+
+                    if (rs.next()) {
+                        String currentScore1 = rs.getString("score_1");
+                        String currentScore2 = rs.getString("score_2");
+
+                        if (currentScore1 == null || currentScore1.isEmpty()) {
+                            // If score_1 is empty, insert the score there
+                            PreparedStatement updateStmt = dbConnection.prepareStatement(
+                                    "UPDATE rooms SET score_1 = ? WHERE id = ?"
+                            );
+                            updateStmt.setString(1, score);
+                            updateStmt.setInt(2, Integer.parseInt(roomId));
+                            updateStmt.executeUpdate();
+                            out.println("SCORE_SUCCESS: 1 player complete");
+                        } else if (currentScore2 == null || currentScore2.isEmpty()) {
+                            // If score_1 is filled, insert into score_2
+                            PreparedStatement updateStmt = dbConnection.prepareStatement(
+                                    "UPDATE rooms SET score_2 = ? WHERE id = ?"
+                            );
+                            updateStmt.setString(1, score);
+                            updateStmt.setInt(2, Integer.parseInt(roomId));
+                            updateStmt.executeUpdate();
+                            out.println("SCORE_SUCCESS: 2 player complete");
+                            System.out.println("send: "+ "SCORE_SUCCESS: 2 player complete");
+
+                            compareScoresIfReady(Integer.parseInt(roomId));
+                        } else {
+                            System.out.println("Both scores are already filled for room ID: " + roomId);
+                            out.println("SCORE_FAIL Both scores are already filled");
+                            return;
+                        }
+
+                        System.out.println("Score saved for userId: " + userId + " in roomId: " + roomId);
+
+                    } else {
+                        System.out.println("Room not found with ID: " + roomId);
+                        out.println("SCORE_FAIL Room not found");
+                    }
+
+
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                    out.println("SCORE_FAIL");
+                }
+            } else {
+                System.out.println("Invalid SEND_SCORE request format");
+                out.println("SCORE_FAIL");
+            }
+        }
+        private void compareScoresIfReady(int roomId) {
+            try {
+                // Check if both scores are set
+                PreparedStatement checkStmt = dbConnection.prepareStatement(
+                        "SELECT score_1, score_2 FROM rooms WHERE id = ?"
+                );
+                checkStmt.setInt(1, roomId);
+                ResultSet rs = checkStmt.executeQuery();
+
+                if (rs.next()) {
+                    String currentScore1 = rs.getString("score_1");
+                    String currentScore2 = rs.getString("score_2");
+
+                    if (currentScore1 != null && !currentScore1.isEmpty() &&
+                            currentScore2 != null && !currentScore2.isEmpty()) {
+                        // Both scores are present, now compare them
+                        String[] score1Parts = currentScore1.split("/");
+                        String[] score2Parts = currentScore2.split("/");
+
+                        if (score1Parts.length == 2 && score2Parts.length == 2) {
+                            int score1Value = Integer.parseInt(score1Parts[1]);
+                            int score2Value = Integer.parseInt(score2Parts[1]);
+
+                            String comparisonResult;
+                            if (score1Value > score2Value) {
+                                comparisonResult = "User " + score1Parts[0] + " has a higher score.";
+                            } else if (score1Value < score2Value) {
+                                comparisonResult = "User " + score2Parts[0] + " has a higher score.";
+                            } else {
+                                comparisonResult = "Both users have equal scores.";
+                            }
+
+                            // Notify clients of the result
+                            out.println("SCORE_COMPARISON " + comparisonResult);
+                            System.out.println("send to client: "+"SCORE_COMPARISON " + comparisonResult);
+                        } else {
+                            System.out.println("Score format error for room ID: " + roomId);
+                            out.println("SCORE_FAIL Invalid score format");
+                        }
+                    }
+                }
+            } catch (SQLException | NumberFormatException e) {
+                e.printStackTrace();
+                out.println("SCORE_FAIL");
+            }
+        }
+
+
+
         private void handleGetRoom(String request) {
             // Lấy roomId từ request
             String[] parts = request.split(" ");
@@ -313,13 +427,17 @@ public class GameSXServer {
         private void handleCreateRoom (String request) {
             String[] parts = request.split(" ");
             String message="";
+            String score1 ="";
+            String score2 ="";
             if (parts.length == 2) {
                 String userid = parts[1];
 
                 try {
-                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO rooms (player1_id,message) VALUES (?,?)");
+                    PreparedStatement stmt = dbConnection.prepareStatement("INSERT INTO rooms (player1_id,message,score_1,score_2) VALUES (?,?,?,?)");
                     stmt.setString(1, userid);
                     stmt.setString(2, message);
+                    stmt.setString(3, score1);
+                    stmt.setString(4, score2);
                     stmt.executeUpdate();
                     PreparedStatement stmt2 = dbConnection.prepareStatement("SELECT id FROM rooms WHERE player1_id = ?");
                     stmt2.setString(1, userid);
@@ -462,31 +580,7 @@ public class GameSXServer {
             }
         }
 
-        private boolean isSorted(List<Integer> list, List<Integer> originalList) {
-            // Tạo bản sao của danh sách ban đầu để sắp xếp
-            List<Integer> ascendingList = new ArrayList<>(originalList);
-            List<Integer> descendingList = new ArrayList<>(originalList);
 
-            // Sắp xếp bản sao theo thứ tự tăng dần và giảm dần
-            Collections.sort(ascendingList);
-            Collections.sort(descendingList, Collections.reverseOrder());
-
-            // Kiểm tra xem danh sách đầu vào có khớp với bản sao đã sắp xếp không
-            return list.equals(ascendingList) || list.equals(descendingList);
-        }
-
-        private List<Integer> ChuyenVeDayNumbers(String input) {
-            List<Integer> numbers = new ArrayList<>();
-            try {
-                String[] parts = input.split(",");
-                for (String part : parts) {
-                    numbers.add(Integer.parseInt(part.trim()));
-                }
-            } catch (NumberFormatException e) {
-                out.println("ERROR: Invalid input. Please enter numbers separated by commas.");
-            }
-            return numbers;
-        }
 
     }
 
