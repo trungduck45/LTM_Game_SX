@@ -176,8 +176,6 @@ public class WaitingRoomScreen extends JFrame {
     }
 
 
-
-
     private void sendChallengeResponse(String response) {
         try (Socket socket = new Socket(serverAddress, serverPort);
              PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {

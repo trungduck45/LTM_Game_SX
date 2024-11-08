@@ -352,7 +352,10 @@ public class GameSXServer {
 
                 System.out.println("List of connected users:");
                 for (ClientHandler client : clients) {
-                    System.out.println(client.username);
+                    if(client.username != null){
+                        System.out.println(client.username);
+                    }
+
                 }
 
 
