@@ -81,11 +81,18 @@ public class EndGameScreen extends JFrame {
 //            } else {
 //                System.err.println("Failed to send score. Server responded with: " + response);
 //            }
-            String response = in.nextLine();
-            if (response.startsWith("RESULT")) {
-                String comparisonResult = in.nextLine(); // Expecting SCORE_COMPARISON WIN/LOSE/DRAW
-                handleComparisonResult(comparisonResult);
-            }
+            new Thread(() -> {
+                String response = "";
+                try {
+                    response = in.nextLine();
+                    if (response.startsWith("RESULT")) {
+                        String comparisonResult = in.nextLine(); // Expecting SCORE_COMPARISON WIN/LOSE/DRAW
+                        handleComparisonResult(comparisonResult);
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error: " + e);
+                }
+            }).start();
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error sending score to server.");

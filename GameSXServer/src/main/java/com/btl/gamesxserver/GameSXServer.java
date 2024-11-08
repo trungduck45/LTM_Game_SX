@@ -212,8 +212,7 @@ public class GameSXServer {
             if (parts.length == 4) {
                 String roomId = parts[1];
                 String userId = parts[2];
-                String score_tmp = parts[3]; // Store score as a string
-                String score = userId+"/"+score_tmp;
+                String score = parts[3]; // Store score as a string
                 try {
                     // Query the current state of `score_1` and `score_2` for the specified room
                     PreparedStatement checkStmt = dbConnection.prepareStatement(
@@ -232,10 +231,16 @@ public class GameSXServer {
                             PreparedStatement updateStmt = dbConnection.prepareStatement(
                                     "UPDATE rooms SET score_1 = ? WHERE id = ?"
                             );
+                            updateStmt.setString(1, score);
+                            updateStmt.setInt(2, Integer.parseInt(roomId));
+                            updateStmt.executeUpdate();
                         } else if (player2_id.equals(userId)) {
                             PreparedStatement updateStmt = dbConnection.prepareStatement(
                                     "UPDATE rooms SET score_2 = ? WHERE id = ?"
                             );
+                            updateStmt.setString(1, score);
+                            updateStmt.setInt(2, Integer.parseInt(roomId));
+                            updateStmt.executeUpdate();
                         } else {
                             System.out.println("User not in room with ID: " + roomId);
                             out.println("SCORE_FAIL User not in room");
