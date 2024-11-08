@@ -239,7 +239,7 @@ public class GameScreen extends JFrame {
                 if(ok==1) scoreSum -= 5;
             }
             //System.out.println("Diem : "+ scoreSum);
-            if(currentLevelValue<10) {
+            if(currentLevelValue<MAX_LEVELS) {
 
                 scoreLabel.setText("Điểm: "+scoreSum);
                 String[] ListNumWord = DayCanSXSUM.split(";");
