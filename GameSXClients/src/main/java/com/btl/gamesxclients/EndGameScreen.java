@@ -81,6 +81,11 @@ public class EndGameScreen extends JFrame {
 //            } else {
 //                System.err.println("Failed to send score. Server responded with: " + response);
 //            }
+            String response = in.nextLine();
+            if (response.startsWith("RESULT")) {
+                String comparisonResult = in.nextLine(); // Expecting SCORE_COMPARISON WIN/LOSE/DRAW
+                handleComparisonResult(comparisonResult);
+            }
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Error sending score to server.");
@@ -89,23 +94,48 @@ public class EndGameScreen extends JFrame {
 
     private void handleComparisonResult(String comparisonResult) {
         // Now we process the comparison result from the server
-        if (comparisonResult.contains("has a higher score")) {
-            // Extract the user who won the game from the comparison result
-            String winner = comparisonResult.split(" ")[1]; // Extract the winner's username
-            if (userId.equals(winner)) {
+        String[] parts = comparisonResult.split(" ");
+        if (userId.equals(parts[2])) {
+            if (Integer.parseInt(parts[4]) > Integer.parseInt(parts[5])) {
                 resultLabel.setText("Bạn thắng!");
                 resultLabel.setForeground(Color.GREEN); // Change text color to green
-            } else {
+            } else if (Integer.parseInt(parts[4]) < Integer.parseInt(parts[5])) {
                 resultLabel.setText("Bạn thua!");
                 resultLabel.setForeground(Color.RED); // Change text color to red
+            } else {
+                resultLabel.setText("Hòa!");
+                resultLabel.setForeground(Color.ORANGE); // Change text color to orange
             }
-        } else if ("Both users have equal scores.".equals(comparisonResult)) {
-            resultLabel.setText("Hòa!");
-            resultLabel.setForeground(Color.ORANGE); // Change text color to orange
         } else {
-            resultLabel.setText("Có lỗi xảy ra!");
-            resultLabel.setForeground(Color.BLACK); // Default color for errors
+            if (Integer.parseInt(parts[4]) < Integer.parseInt(parts[5])) {
+                resultLabel.setText("Bạn thắng!");
+                resultLabel.setForeground(Color.GREEN); // Change text color to green
+            } else if (Integer.parseInt(parts[4]) > Integer.parseInt(parts[5])) {
+                resultLabel.setText("Bạn thua!");
+                resultLabel.setForeground(Color.RED); // Change text color to red
+            } else {
+                resultLabel.setText("Hòa!");
+                resultLabel.setForeground(Color.ORANGE); // Change text color to orange
+            }
         }
+
+//        if (comparisonResult.contains("has a higher score")) {
+//            // Extract the user who won the game from the comparison result
+//            String winner = comparisonResult.split(" ")[1]; // Extract the winner's username
+//            if (userId.equals(winner)) {
+//                resultLabel.setText("Bạn thắng!");
+//                resultLabel.setForeground(Color.GREEN); // Change text color to green
+//            } else {
+//                resultLabel.setText("Bạn thua!");
+//                resultLabel.setForeground(Color.RED); // Change text color to red
+//            }
+//        } else if ("Both users have equal scores.".equals(comparisonResult)) {
+//            resultLabel.setText("Hòa!");
+//            resultLabel.setForeground(Color.ORANGE); // Change text color to orange
+//        } else {
+//            resultLabel.setText("Có lỗi xảy ra!");
+//            resultLabel.setForeground(Color.BLACK); // Default color for errors
+//        }
     }
 
     private void exit() {

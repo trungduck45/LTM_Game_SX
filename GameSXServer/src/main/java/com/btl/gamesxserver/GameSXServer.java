@@ -217,48 +217,84 @@ public class GameSXServer {
                 try {
                     // Query the current state of `score_1` and `score_2` for the specified room
                     PreparedStatement checkStmt = dbConnection.prepareStatement(
-                            "SELECT score_1, score_2 FROM rooms WHERE id = ?"
+                            "SELECT player1_id, player2_id FROM rooms WHERE id = ?"
                     );
                     checkStmt.setInt(1, Integer.parseInt(roomId));
                     ResultSet rs = checkStmt.executeQuery();
 
-                    if (rs.next()) {
-                        String currentScore1 = rs.getString("score_1");
-                        String currentScore2 = rs.getString("score_2");
+                    String player1_id = "";
+                    String player2_id = "";
 
-                        if (currentScore1 == null || currentScore1.isEmpty()) {
-                            // If score_1 is empty, insert the score there
+                    if (rs.next()) {
+                        player1_id = rs.getString("player1_id");
+                        player2_id = rs.getString("player2_id");
+                        if (player1_id.equals(userId)) {
                             PreparedStatement updateStmt = dbConnection.prepareStatement(
                                     "UPDATE rooms SET score_1 = ? WHERE id = ?"
                             );
-                            updateStmt.setString(1, score);
-                            updateStmt.setInt(2, Integer.parseInt(roomId));
-                            updateStmt.executeUpdate();
-                            out.println("SCORE_SUCCESS: 1 player complete");
-                        } else if (currentScore2 == null || currentScore2.isEmpty()) {
-                            // If score_1 is filled, insert into score_2
+                        } else if (player2_id.equals(userId)) {
                             PreparedStatement updateStmt = dbConnection.prepareStatement(
                                     "UPDATE rooms SET score_2 = ? WHERE id = ?"
                             );
-                            updateStmt.setString(1, score);
-                            updateStmt.setInt(2, Integer.parseInt(roomId));
-                            updateStmt.executeUpdate();
-                            out.println("SCORE_SUCCESS: 2 player complete");
-                            System.out.println("send: "+ "SCORE_SUCCESS: 2 player complete");
-
-                            compareScoresIfReady(Integer.parseInt(roomId));
                         } else {
-                            System.out.println("Both scores are already filled for room ID: " + roomId);
-                            out.println("SCORE_FAIL Both scores are already filled");
+                            System.out.println("User not in room with ID: " + roomId);
+                            out.println("SCORE_FAIL User not in room");
                             return;
                         }
-
-                        System.out.println("Score saved for userId: " + userId + " in roomId: " + roomId);
-
-                    } else {
-                        System.out.println("Room not found with ID: " + roomId);
-                        out.println("SCORE_FAIL Room not found");
                     }
+
+                    while (true) {
+                        PreparedStatement stmt = dbConnection.prepareStatement("SELECT score_1, score_2 FROM rooms WHERE id = ?");
+                        stmt.setInt(1, Integer.parseInt(roomId));
+                        ResultSet rs1 = stmt.executeQuery();
+                        if (rs1.next()) {
+                            String Score1 = rs1.getString("score_1");
+                            String Score2 = rs1.getString("score_2");
+                            if (Score1 != null && Score2 != null) {
+                                String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
+                                out.println(res);
+                                break;
+                            }
+                        }
+                    }
+
+//                    if (rs.next()) {
+//                        String currentScore1 = rs.getString("score_1");
+//                        String currentScore2 = rs.getString("score_2");
+//
+//                        if (currentScore1 == null || currentScore1.isEmpty()) {
+//                            // If score_1 is empty, insert the score there
+//                            PreparedStatement updateStmt = dbConnection.prepareStatement(
+//                                    "UPDATE rooms SET score_1 = ? WHERE id = ?"
+//                            );
+//                            updateStmt.setString(1, score);
+//                            updateStmt.setInt(2, Integer.parseInt(roomId));
+//                            updateStmt.executeUpdate();
+//                            out.println("SCORE_SUCCESS: 1 player complete");
+//                        } else if (currentScore2 == null || currentScore2.isEmpty()) {
+//                            // If score_1 is filled, insert into score_2
+//                            PreparedStatement updateStmt = dbConnection.prepareStatement(
+//                                    "UPDATE rooms SET score_2 = ? WHERE id = ?"
+//                            );
+//                            updateStmt.setString(1, score);
+//                            updateStmt.setInt(2, Integer.parseInt(roomId));
+//                            updateStmt.executeUpdate();
+//                            out.println("SCORE_SUCCESS: 2 player complete");
+//                            System.out.println("send: "+ "SCORE_SUCCESS: 2 player complete");
+//
+//                            compareScoresIfReady(Integer.parseInt(roomId));
+//                        } else {
+//                            System.out.println("Both scores are already filled for room ID: " + roomId);
+//                            out.println("SCORE_FAIL Both scores are already filled");
+//                            return;
+//                        }
+//
+//                        System.out.println("Score saved for userId: " + userId + " in roomId: " + roomId);
+//
+//                    } else {
+//                        System.out.println("Room not found with ID: " + roomId);
+//                        out.println("SCORE_FAIL Room not found");
+//                    }
 
 
                 } catch (SQLException e) {
@@ -270,6 +306,7 @@ public class GameSXServer {
                 out.println("SCORE_FAIL");
             }
         }
+
         private void compareScoresIfReady(int roomId) {
             try {
                 // Check if both scores are set

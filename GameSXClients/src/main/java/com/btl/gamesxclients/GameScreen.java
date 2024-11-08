@@ -99,14 +99,14 @@ public class GameScreen extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-        JButton sendButton = new JButton("Check");
-        sendButton.addActionListener(e -> CheckDataAnswer());
+//        JButton sendButton = new JButton("Check");
+//        sendButton.addActionListener(e -> CheckDataAnswer());
 
         JButton exitButton = new JButton("Thoát Game");
         exitButton.addActionListener(e -> exitScreen());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.add(sendButton);
+//        buttonPanel.add(sendButton);
         buttonPanel.add(exitButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
