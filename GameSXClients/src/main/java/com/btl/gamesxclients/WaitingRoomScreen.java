@@ -90,9 +90,9 @@ public class WaitingRoomScreen extends JFrame {
         // Fetch online players initially
         updateOnlinePlayers();
 
-        // Create a Timer to refresh the online players list every 5 seconds
-//        Timer timer = new Timer(5000, e -> updateOnlinePlayers());
-//        timer.start(); // Start the timer
+//         Create a Timer to refresh the online players list every 5 seconds
+        Timer timer = new Timer(5000, e -> updateOnlinePlayers());
+        timer.start(); // Start the timer
 
         // Create a panel for the buttons
         JPanel buttonPanel = new JPanel();
@@ -175,7 +175,6 @@ public class WaitingRoomScreen extends JFrame {
             out.println("CHALLENGE " + selectedPlayerId + " " + userId + " " + roomId);
             SwingUtilities.invokeLater(() -> {
                 new WaitingChallengeScreen(userId, roomId).setVisible(true);
-                dispose();
             });
         }else if (response1 == JOptionPane.NO_OPTION) {
             // Gọi hàm deleteRoom nếu người dùng chọn No
@@ -289,7 +288,6 @@ public class WaitingRoomScreen extends JFrame {
             }
             SwingUtilities.invokeLater(() -> {
                 new GameScreen("localhost", player2, roomId , player1,message).setVisible(true);
-                dispose();
             });
 
         } else if ("ROOM_FULL".equals(response)) {

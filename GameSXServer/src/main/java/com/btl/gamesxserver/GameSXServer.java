@@ -250,26 +250,23 @@ public class GameSXServer {
                         }
                     }
 
-                    String Score1 = "";
-                    String Score2 = "";
-
                     while (true) {
                         PreparedStatement stmt = dbConnection.prepareStatement("SELECT score_1, score_2 FROM rooms WHERE id = ?");
                         stmt.setInt(1, Integer.parseInt(roomId));
                         ResultSet rs1 = stmt.executeQuery();
                         if (rs1.next()) {
-                            Score1 = rs1.getString("score_1");
-                            Score2 = rs1.getString("score_2");
-                            if (!Score1.isEmpty() && !Score2.isEmpty()) {
+                            String Score1 = rs1.getString("score_1");
+                            String Score2 = rs1.getString("score_2");
+                            if (Score1.length() > 0 && Score2.length() > 0) {
                                 String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
                                 System.out.println(res);
+                                handleTotalPoint(player1_id, player2_id, Score1, Score2);
                                 broadcast(res);
                                 break;
                             }
                         }
                     }
 
-                    handleTotalPoint(player1_id,player2_id,Score1,Score2);
                 } catch (SQLException e) {
                     e.printStackTrace();
                     out.println("SCORE_FAIL");
@@ -299,6 +296,19 @@ public class GameSXServer {
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
+                    stmt.setString(1, player2_id);
+                    rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        int totalpoint = rs.getInt("totalpoint");
+                        totalpoint += 0;
+                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
+                        stmt2.setInt(1, totalpoint);
+                        stmt2.setString(2, player2_id);
+                        stmt2.executeUpdate();
+                        System.out.println("PL2 +0");
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -318,11 +328,10 @@ public class GameSXServer {
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
-                    PreparedStatement stmt1 = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
-                    stmt1.setString(1, player2_id);
-                    ResultSet rs1 = stmt1.executeQuery();
-                    if (rs1.next()) {
-                        int totalpoint = rs1.getInt("totalpoint");
+                    stmt.setString(1, player2_id);
+                    rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        int totalpoint = rs.getInt("totalpoint");
                         totalpoint += 1;
                         PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
                         stmt2.setInt(1, totalpoint);
@@ -351,60 +360,24 @@ public class GameSXServer {
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
+                    stmt.setString(1, player1_id);
+                    rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        int totalpoint = rs.getInt("totalpoint");
+                        totalpoint += 0;
+                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
+                        stmt2.setInt(1, totalpoint);
+                        stmt2.setString(2, player1_id);
+                        stmt2.executeUpdate();
+                        System.out.println("PL1 +0");
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
             }
         }
-
-        private void compareScoresIfReady(int roomId) {
-            try {
-                // Check if both scores are set
-                PreparedStatement checkStmt = dbConnection.prepareStatement(
-                        "SELECT score_1, score_2 FROM rooms WHERE id = ?"
-                );
-                checkStmt.setInt(1, roomId);
-                ResultSet rs = checkStmt.executeQuery();
-
-                if (rs.next()) {
-                    String currentScore1 = rs.getString("score_1");
-                    String currentScore2 = rs.getString("score_2");
-
-                    if (currentScore1 != null && !currentScore1.isEmpty() &&
-                            currentScore2 != null && !currentScore2.isEmpty()) {
-                        // Both scores are present, now compare them
-                        String[] score1Parts = currentScore1.split("/");
-                        String[] score2Parts = currentScore2.split("/");
-
-                        if (score1Parts.length == 2 && score2Parts.length == 2) {
-                            int score1Value = Integer.parseInt(score1Parts[1]);
-                            int score2Value = Integer.parseInt(score2Parts[1]);
-
-                            String comparisonResult;
-                            if (score1Value > score2Value) {
-                                comparisonResult = "User " + score1Parts[0] + " has a higher score.";
-                            } else if (score1Value < score2Value) {
-                                comparisonResult = "User " + score2Parts[0] + " has a higher score.";
-                            } else {
-                                comparisonResult = "Both users have equal scores.";
-                            }
-
-                            // Notify clients of the result
-                            out.println("SCORE_COMPARISON " + comparisonResult);
-                            System.out.println("send to client: "+"SCORE_COMPARISON " + comparisonResult);
-                        } else {
-                            System.out.println("Score format error for room ID: " + roomId);
-                            out.println("SCORE_FAIL Invalid score format");
-                        }
-                    }
-                }
-            } catch (SQLException | NumberFormatException e) {
-                e.printStackTrace();
-                out.println("SCORE_FAIL");
-            }
-        }
-
-
 
         private void handleGetRoom(String request) {
             // Lấy roomId từ request
@@ -598,46 +571,6 @@ public class GameSXServer {
                 String roomId = parts[3];
                 String challengerName = parts[2];
                 String targetUsername = parts[1];
-//                System.out.println("Target username: " + targetUsername);
-//                System.out.println("Challenger name: " + challengerName);
-
-//                System.out.println("List of connected users:");
-//                for (ClientHandler client : clients) {
-//                    if(client.username != null){
-//                        System.out.println(client.username);
-//                    }
-//
-//                }
-
-
-//                try {
-//                    boolean targetFound = false;
-//                    for (ClientHandler client : clients) {
-//                        if (client.username != null && client.username.equals(targetUsername)) {
-//                            targetFound = true;
-//                            System.out.println("Target found: " + client.username); // Kiểm tra target đã tìm thấy
-//                            if (client.socket.isConnected()) {
-//                                // Gửi yêu cầu thách đấu cho người chơi mục tiêu
-//                                System.out.println("Sending challenge to " + client.username);
-//                                client.out.println("CHALLENGE_REQUEST_FROM " + challengerName);
-//                                client.out.flush();
-//                                System.out.println("Challenge sent to " + targetUsername);
-//                                out.println("CHALLENGE_SENT " + targetUsername);
-//                            } else {
-//                                out.println("CHALLENGE_FAIL1 Target user is not online.");
-//                            }
-//                            break;
-//                        }
-//                    }
-//                    if (!targetFound) {
-//                        out.println("CHALLENGE_FAIL User not found.");
-//                    }
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    out.println("CHALLENGE_FAIL An error occurred.");
-//                }
-//                System.out.println("Client1");
-//                out.println("CHALLENGE_SENT" + targetUsername);
                 System.out.println("Client2");
                 broadcast("CHALLENGE_TO:" + targetUsername + " " + challengerName + " " + roomId);
             } else {
