@@ -13,6 +13,7 @@ public class UserProfile {
         this.totalPoint = totalPoint;
         this.rankedPoint = rankedPoint;
         this.status = status;
+        this.userId = userId;
     }
 
     public String getUserId() {

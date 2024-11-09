@@ -46,7 +46,7 @@ public class GameSXServer {
         private PrintWriter out;
         private String username;
         private int score = 0;
-     
+
         // Danh sách các từ để chơi
         private static final List<String> WORDS = Arrays.asList("apple", "banana", "orange", "grape", "mango");
 
@@ -76,7 +76,7 @@ public class GameSXServer {
                     handleCreateRoom(request);
                 } else if (request.startsWith("DELETE_ROOM")) {
                     handleDeleteRoom(request);
-                } else if (request.equals("GET_ALL_USERS")) {
+                } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
                     handleGetAllUsers();
                 } else if (request.startsWith("START_GAME")) {
                     //System.out.println("tao danh sach:..........");
@@ -85,11 +85,13 @@ public class GameSXServer {
                     handleGetRoom(request);
                 } else if (request.startsWith("SEND_SCORE")) {
                     handleSendScore(request);
+                } else if (request.startsWith("CHALLENGE")) {
+                    handleChallenge(request);
                 } else {
                     username = request;
                 }
 
-            } catch (IOException  e) {
+            } catch (IOException e) {
                 System.out.println("Client disconnected: " + socket.getInetAddress());
             } finally {
                 try {
@@ -475,7 +477,7 @@ public class GameSXServer {
             if (parts.length == 3) {
                 String roomId = parts[1];
                 String userId = parts[2];
-               
+
                 try {
                     PreparedStatement stmt = dbConnection.prepareStatement("SELECT player1_id, player2_id FROM rooms WHERE id = ?");
                     stmt.setString(1, roomId);
@@ -495,7 +497,6 @@ public class GameSXServer {
                             startGame("START_GAME " + roomId);
 
                             broadcast("PLAYER_JOIN");
-                            //handleGetRoom("GET_ROOM "+roomId);
                         } else {
                             out.println("ROOM_FULL");
                         }
@@ -590,6 +591,60 @@ public class GameSXServer {
             }
         }
 
+        private void handleChallenge(String request) {
+            String[] parts = request.split(" ");
+
+            if (parts.length == 4) {
+                String roomId = parts[3];
+                String challengerName = parts[2];
+                String targetUsername = parts[1];
+//                System.out.println("Target username: " + targetUsername);
+//                System.out.println("Challenger name: " + challengerName);
+
+//                System.out.println("List of connected users:");
+//                for (ClientHandler client : clients) {
+//                    if(client.username != null){
+//                        System.out.println(client.username);
+//                    }
+//
+//                }
+
+
+//                try {
+//                    boolean targetFound = false;
+//                    for (ClientHandler client : clients) {
+//                        if (client.username != null && client.username.equals(targetUsername)) {
+//                            targetFound = true;
+//                            System.out.println("Target found: " + client.username); // Kiểm tra target đã tìm thấy
+//                            if (client.socket.isConnected()) {
+//                                // Gửi yêu cầu thách đấu cho người chơi mục tiêu
+//                                System.out.println("Sending challenge to " + client.username);
+//                                client.out.println("CHALLENGE_REQUEST_FROM " + challengerName);
+//                                client.out.flush();
+//                                System.out.println("Challenge sent to " + targetUsername);
+//                                out.println("CHALLENGE_SENT " + targetUsername);
+//                            } else {
+//                                out.println("CHALLENGE_FAIL1 Target user is not online.");
+//                            }
+//                            break;
+//                        }
+//                    }
+//                    if (!targetFound) {
+//                        out.println("CHALLENGE_FAIL User not found.");
+//                    }
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    out.println("CHALLENGE_FAIL An error occurred.");
+//                }
+//                System.out.println("Client1");
+//                out.println("CHALLENGE_SENT" + targetUsername);
+                System.out.println("Client2");
+                broadcast("CHALLENGE_TO:" + targetUsername + " " + challengerName + " " + roomId);
+            } else {
+                out.println("CHALLENGE_FAIL Invalid request format.");
+            }
+        }
+
         private void startGame(String request) throws IOException {
             // Lấy roomId từ request
             String[] parts = request.split(" ");
@@ -601,6 +656,7 @@ public class GameSXServer {
             StringBuilder message = new StringBuilder();
             int i=0;
             while( i<10){
+                // Quyết định ngẫu nhiên giữa dãy số và từ
                 if (new Random().nextBoolean()) {
                     message.append(generateRandomNumbers());
                 } else {
