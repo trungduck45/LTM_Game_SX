@@ -10,7 +10,7 @@ import java.net.Socket;
 import java.util.Scanner;
 
 public class EndGameScreen extends JFrame {
-    private String userId; // Add userId as an instance variable
+    private String userId;
     private JLabel resultLabel;
     private Socket socket;
     private PrintWriter out;
@@ -19,40 +19,44 @@ public class EndGameScreen extends JFrame {
     public EndGameScreen(String username, String roomId, String userId, int score) {
         this.userId = userId;
         setTitle("Kết thúc trò chơi");
-        setSize(400, 200);
-        setLayout(new BorderLayout());
+        setSize(400, 300);
+        setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
 
-        // Hiển thị tên người chơi và điểm
         JLabel roomLabel = new JLabel("Phòng chơi số " + roomId, SwingConstants.CENTER);
         JLabel userLabel = new JLabel("Bạn: " + username, SwingConstants.CENTER);
         JLabel scoreLabel = new JLabel("Số điểm: " + score, SwingConstants.CENTER);
-
-        // Initialize resultLabel
         resultLabel = new JLabel("", SwingConstants.CENTER);
 
-        // Panel hiển thị
-        JPanel infoPanel = new JPanel();
-        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
-        infoPanel.add(roomLabel);
-        infoPanel.add(userLabel);
-        infoPanel.add(scoreLabel);
-        infoPanel.add(resultLabel); // Add resultLabel to the panel
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        add(roomLabel, gbc);
 
-        // Thêm nút Thoát
+        gbc.gridy = 1;
+        add(userLabel, gbc);
+
+        gbc.gridy = 2;
+        add(scoreLabel, gbc);
+
+        gbc.gridy = 3;
+        add(resultLabel, gbc);
+
         JButton exitButton = new JButton("Thoát");
         exitButton.addActionListener(e -> exit());
-        infoPanel.add(exitButton);
-
-        // Căn giữa và thêm vào frame
-        add(infoPanel, BorderLayout.CENTER);
+        gbc.gridy = 4;
+        gbc.gridwidth = 2; // Set gridwidth to 2 to span both columns
+        gbc.anchor = GridBagConstraints.CENTER; // Center the button
+        add(exitButton, gbc);
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setLocationRelativeTo(null); // Hiển thị ở giữa màn hình
+        setLocationRelativeTo(null);
 
-        // Send score to the server
         sendScore(roomId, userId, String.valueOf(score));
 
-        setVisible(true); // Show the frame
+        setVisible(true);
     }
 
     private void sendScore(String roomId, String userId, String score) {
@@ -61,7 +65,6 @@ public class EndGameScreen extends JFrame {
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new Scanner(socket.getInputStream());
 
-            // Send score data to the server
             out.println("SEND_SCORE " + roomId + " " + userId + " " + score);
 
             new Thread(() -> {
@@ -70,7 +73,7 @@ public class EndGameScreen extends JFrame {
                         BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
                         String response = in.readLine();
                         if (response.startsWith("RESULT")) {
-                            String comparisonResult = response; // Expecting SCORE_COMPARISON WIN/LOSE/DRAW
+                            String comparisonResult = response;
                             System.out.println(response);
                             handleComparisonResult(comparisonResult);
                             break;
@@ -88,34 +91,34 @@ public class EndGameScreen extends JFrame {
     }
 
     private void handleComparisonResult(String comparisonResult) {
-        // Now we process the comparison result from the server
         String[] parts = comparisonResult.split(" ");
         if (userId.equals(parts[2])) {
             if (Integer.parseInt(parts[4]) > Integer.parseInt(parts[5])) {
                 resultLabel.setText("Bạn thắng!");
-                resultLabel.setForeground(Color.GREEN); // Change text color to green
+                resultLabel.setForeground(Color.GREEN);
             } else if (Integer.parseInt(parts[4]) < Integer.parseInt(parts[5])) {
                 resultLabel.setText("Bạn thua!");
-                resultLabel.setForeground(Color.RED); // Change text color to red
+                resultLabel.setForeground(Color.RED);
             } else {
                 resultLabel.setText("Hòa!");
-                resultLabel.setForeground(Color.ORANGE); // Change text color to orange
+                resultLabel.setForeground(Color.ORANGE);
             }
         } else {
             if (Integer.parseInt(parts[4]) < Integer.parseInt(parts[5])) {
                 resultLabel.setText("Bạn thắng!");
-                resultLabel.setForeground(Color.GREEN); // Change text color to green
+                resultLabel.setForeground(Color.GREEN);
             } else if (Integer.parseInt(parts[4]) > Integer.parseInt(parts[5])) {
                 resultLabel.setText("Bạn thua!");
-                resultLabel.setForeground(Color.RED); // Change text color to red
+                resultLabel.setForeground(Color.RED);
             } else {
                 resultLabel.setText("Hòa!");
-                resultLabel.setForeground(Color.ORANGE); // Change text color to orange
+                resultLabel.setForeground(Color.ORANGE);
             }
         }
     }
 
     private void exit() {
+        deleteRoom();
         try {
             if (socket != null) {
                 socket.close();
@@ -129,6 +132,23 @@ public class EndGameScreen extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        dispose(); // Close the frame
+        dispose();
+    }
+
+    private void deleteRoom() {
+        try (Socket socket = new Socket("localhost", 12345);
+             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+
+            out.println("DELETE_ROOM " + userId);
+
+            String response = in.readLine();
+            if (!"DELETE_ROOM_SUCCESS".equals(response)) {
+                JOptionPane.showMessageDialog(this, "Failed to delete room.");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Error connecting to server.");
+        }
     }
 }

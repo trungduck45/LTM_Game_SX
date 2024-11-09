@@ -248,13 +248,16 @@ public class GameSXServer {
                         }
                     }
 
+                    String Score1 = "";
+                    String Score2 = "";
+
                     while (true) {
                         PreparedStatement stmt = dbConnection.prepareStatement("SELECT score_1, score_2 FROM rooms WHERE id = ?");
                         stmt.setInt(1, Integer.parseInt(roomId));
                         ResultSet rs1 = stmt.executeQuery();
                         if (rs1.next()) {
-                            String Score1 = rs1.getString("score_1");
-                            String Score2 = rs1.getString("score_2");
+                            Score1 = rs1.getString("score_1");
+                            Score2 = rs1.getString("score_2");
                             if (!Score1.isEmpty() && !Score2.isEmpty()) {
                                 String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
                                 System.out.println(res);
@@ -264,45 +267,7 @@ public class GameSXServer {
                         }
                     }
 
-//                    if (rs.next()) {
-//                        String currentScore1 = rs.getString("score_1");
-//                        String currentScore2 = rs.getString("score_2");
-//
-//                        if (currentScore1 == null || currentScore1.isEmpty()) {
-//                            // If score_1 is empty, insert the score there
-//                            PreparedStatement updateStmt = dbConnection.prepareStatement(
-//                                    "UPDATE rooms SET score_1 = ? WHERE id = ?"
-//                            );
-//                            updateStmt.setString(1, score);
-//                            updateStmt.setInt(2, Integer.parseInt(roomId));
-//                            updateStmt.executeUpdate();
-//                            out.println("SCORE_SUCCESS: 1 player complete");
-//                        } else if (currentScore2 == null || currentScore2.isEmpty()) {
-//                            // If score_1 is filled, insert into score_2
-//                            PreparedStatement updateStmt = dbConnection.prepareStatement(
-//                                    "UPDATE rooms SET score_2 = ? WHERE id = ?"
-//                            );
-//                            updateStmt.setString(1, score);
-//                            updateStmt.setInt(2, Integer.parseInt(roomId));
-//                            updateStmt.executeUpdate();
-//                            out.println("SCORE_SUCCESS: 2 player complete");
-//                            System.out.println("send: "+ "SCORE_SUCCESS: 2 player complete");
-//
-//                            compareScoresIfReady(Integer.parseInt(roomId));
-//                        } else {
-//                            System.out.println("Both scores are already filled for room ID: " + roomId);
-//                            out.println("SCORE_FAIL Both scores are already filled");
-//                            return;
-//                        }
-//
-//                        System.out.println("Score saved for userId: " + userId + " in roomId: " + roomId);
-//
-//                    } else {
-//                        System.out.println("Room not found with ID: " + roomId);
-//                        out.println("SCORE_FAIL Room not found");
-//                    }
-
-
+                    handleTotalPoint(player1_id,player2_id,Score1,Score2);
                 } catch (SQLException e) {
                     e.printStackTrace();
                     out.println("SCORE_FAIL");
@@ -310,6 +275,83 @@ public class GameSXServer {
             } else {
                 System.out.println("Invalid SEND_SCORE request format");
                 out.println("SCORE_FAIL");
+            }
+        }
+
+        private void handleTotalPoint(String player1_id, String player2_id, String Score1, String Score2) {
+            int Score1Value = Integer.parseInt(Score1);
+            int Score2Value = Integer.parseInt(Score2);
+            if (Score1Value > Score2Value) {
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
+                    stmt.setString(1, player1_id);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        int totalpoint = rs.getInt("totalpoint");
+                        totalpoint += 2;
+                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
+                        stmt2.setInt(1, totalpoint);
+                        stmt2.setString(2, player1_id);
+                        stmt2.executeUpdate();
+                        System.out.println("PL1 +2");
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else if (Score1Value == Score2Value) {
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
+                    stmt.setString(1, player1_id);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        int totalpoint = rs.getInt("totalpoint");
+                        totalpoint += 1;
+                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
+                        stmt2.setInt(1, totalpoint);
+                        stmt2.setString(2, player1_id);
+                        stmt2.executeUpdate();
+                        System.out.println("PL1 +1");
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
+                    PreparedStatement stmt1 = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
+                    stmt1.setString(1, player2_id);
+                    ResultSet rs1 = stmt1.executeQuery();
+                    if (rs1.next()) {
+                        int totalpoint = rs1.getInt("totalpoint");
+                        totalpoint += 1;
+                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
+                        stmt2.setInt(1, totalpoint);
+                        stmt2.setString(2, player2_id);
+                        stmt2.executeUpdate();
+                        System.out.println("PL2 +1");
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                try {
+                    PreparedStatement stmt = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
+                    stmt.setString(1, player2_id);
+                    ResultSet rs = stmt.executeQuery();
+                    if (rs.next()) {
+                        int totalpoint = rs.getInt("totalpoint");
+                        totalpoint += 2;
+                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
+                        stmt2.setInt(1, totalpoint);
+                        stmt2.setString(2, player2_id);
+                        stmt2.executeUpdate();
+                        System.out.println("PL2 +2");
+                    } else {
+                        out.println("USER_NOT_FOUND");
+                    }
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
