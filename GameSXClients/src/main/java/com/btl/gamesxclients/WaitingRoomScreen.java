@@ -77,7 +77,6 @@ public class WaitingRoomScreen extends JFrame {
         // Set the frame to be visible
         setVisible(true);
     }
-
     private void joinRoom(String userId) {
         new JoinRoomScreen(userId).setVisible(true); // Open RoomScreen
     }

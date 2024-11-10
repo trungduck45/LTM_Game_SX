@@ -53,7 +53,7 @@ public class CreateRoomScreen extends JFrame {
             dispose();
         });
 
-        // Initialize server connection and start listening for events
+
         startListeningForEvents();
     }
 

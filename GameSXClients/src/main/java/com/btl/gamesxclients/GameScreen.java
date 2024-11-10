@@ -99,14 +99,14 @@ public class GameScreen extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-        JButton sendButton = new JButton("Check");
-        sendButton.addActionListener(e -> CheckDataAnswer());
+//        JButton sendButton = new JButton("Check");
+//        sendButton.addActionListener(e -> CheckDataAnswer());
 
         JButton exitButton = new JButton("Thoát Game");
         exitButton.addActionListener(e -> exitScreen());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        buttonPanel.add(sendButton);
+//        buttonPanel.add(sendButton);
         buttonPanel.add(exitButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
@@ -129,8 +129,8 @@ public class GameScreen extends JFrame {
 
     private void increaseLevel() {
         if (currentLevelValue  < MAX_LEVELS) {
-       currentLevelValue++;
-        currentLevel.setText("Màn " + currentLevelValue);
+            currentLevelValue++;
+            currentLevel.setText("Màn " + currentLevelValue);
         } else {
             goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
         }
@@ -239,7 +239,7 @@ public class GameScreen extends JFrame {
                 if(ok==1) scoreSum -= 5;
             }
             //System.out.println("Diem : "+ scoreSum);
-            if(currentLevelValue<10) {
+            if(currentLevelValue<MAX_LEVELS) {
 
                 scoreLabel.setText("Điểm: "+scoreSum);
                 String[] ListNumWord = DayCanSXSUM.split(";");
@@ -311,7 +311,7 @@ public class GameScreen extends JFrame {
         // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
 
-//    public void updateScore(String score) {
+    //    public void updateScore(String score) {
 //        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
 //        scoreSum = Integer.parseInt(score);
 //    }
