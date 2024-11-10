@@ -32,7 +32,7 @@ public class LoginScreen extends JFrame {
         gbc.gridy = 0;
         gbc.anchor = GridBagConstraints.EAST;
 
-        JLabel usernameLabel = new JLabel("Usernam:");
+        JLabel usernameLabel = new JLabel("Username:");
         inputPanel.add(usernameLabel, gbc);
 
         gbc.gridx = 1;

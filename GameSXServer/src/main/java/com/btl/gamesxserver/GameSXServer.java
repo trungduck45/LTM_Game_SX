@@ -76,10 +76,9 @@ public class GameSXServer {
                     handleCreateRoom(request);
                 } else if (request.startsWith("DELETE_ROOM")) {
                     handleDeleteRoom(request);
-                } else if (request.equals("GET_ALL_USERS")) { // Xử lý yêu cầu GET_ALL_USERS
+                } else if (request.equals("GET_ALL_USERS")) {
                     handleGetAllUsers();
                 } else if (request.startsWith("START_GAME")) {
-                    //System.out.println("tao danh sach:..........");
                     startGame(request);
                 } else if (request.startsWith("GET_ROOM")) {
                     handleGetRoom(request);
@@ -257,12 +256,11 @@ public class GameSXServer {
                         if (rs1.next()) {
                             String Score1 = rs1.getString("score_1");
                             String Score2 = rs1.getString("score_2");
-                            if (Score1.length() > 0 && Score2.length() > 0) {
+                            if (!Score1.isEmpty() && !Score2.isEmpty()) {
                                 String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
-                                System.out.println(res);
                                 handleTotalPoint(player1_id, player2_id, Score1, Score2);
+                                System.out.println(res);
                                 broadcast(res);
-                                break;
                             }
                         }
                     }

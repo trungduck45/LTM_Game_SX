@@ -138,7 +138,7 @@ public class GameScreen extends JFrame {
 
     private void goToEndGameScreen() {
         dispose(); // Đóng cửa sổ GameScreen hiện tại
-        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText(),roomId,userId,scoreSum);
+        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText().split(" ")[ingameNameLabel.getText().split(" ").length - 1],roomId,userId,scoreSum);
         endGameScreen.setVisible(true);
     }
 
@@ -262,7 +262,7 @@ public class GameScreen extends JFrame {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
-        remainingTime = 5; // Thời gian đếm ngược
+        remainingTime = 20; // Thời gian đếm ngược
         timerLabel.setText("Thời gian: " + remainingTime + "s"); // Cập nhật nhãn thời gian
 
         timer = new Timer();

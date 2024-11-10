@@ -51,7 +51,7 @@ public class WaitingRoomScreen extends JFrame {
         profilePanel.setLayout(new BoxLayout(profilePanel, BoxLayout.Y_AXIS));
         profilePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        JLabel ingameNameLabel = new JLabel("In-game Name: " + userProfile.getIngameName());
+        JLabel ingameNameLabel = new JLabel("Player: " + userProfile.getIngameName());
         ingameNameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
         ingameNameLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
@@ -104,7 +104,7 @@ public class WaitingRoomScreen extends JFrame {
         createRoomButton.addActionListener(e -> createRoom(userId));
         buttonPanel.add(createRoomButton);
 
-        JButton playerlistButton = new JButton("Danh sách người chơi");
+        JButton playerlistButton = new JButton("Bảng xếp hạng");
         playerlistButton.addActionListener(e -> playerList());
         buttonPanel.add(playerlistButton);
 

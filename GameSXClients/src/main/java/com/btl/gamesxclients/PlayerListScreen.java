@@ -12,7 +12,7 @@ import java.util.List;
 public class PlayerListScreen extends JFrame {
 
     public PlayerListScreen() {
-        setTitle("Danh sách người chơi");
+        setTitle("Bảng xếp hạng");
         setSize(350, 250);
         setLayout(new BorderLayout());
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);  // Để đóng riêng cửa sổ này mà không ảnh hưởng đến chương trình chính

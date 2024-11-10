@@ -16,7 +16,7 @@ public class RegisterScreen extends JFrame {
     private JButton closeButton;
 
     public RegisterScreen() {
-        setTitle("Register");
+        setTitle("Đăng ký");
         setSize(400, 300);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -29,7 +29,7 @@ public class RegisterScreen extends JFrame {
         usernameField = new JTextField(15);
         passwordField = new JPasswordField(15);
         ingameNameField = new JTextField(15);
-        registerButton = new JButton("Register");
+        registerButton = new JButton("Đăng ký");
         closeButton = new JButton("Quay lại");
         successLabel = new JLabel("");
 
