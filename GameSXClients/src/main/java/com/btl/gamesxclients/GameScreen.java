@@ -262,7 +262,7 @@ public class GameScreen extends JFrame {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
-        remainingTime = 20; // Thời gian đếm ngược
+        remainingTime = 3; // Thời gian đếm ngược
         timerLabel.setText("Thời gian: " + remainingTime + "s"); // Cập nhật nhãn thời gian
 
         timer = new Timer();

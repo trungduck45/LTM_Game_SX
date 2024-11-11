@@ -256,11 +256,12 @@ public class GameSXServer {
                         if (rs1.next()) {
                             String Score1 = rs1.getString("score_1");
                             String Score2 = rs1.getString("score_2");
-                            if (!Score1.isEmpty() && !Score2.isEmpty()) {
+                            if (Score1 != null && Score2 != null && !Score1.equals("") && !Score2.equals("")) {
                                 String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
                                 handleTotalPoint(player1_id, player2_id, Score1, Score2);
                                 System.out.println(res);
                                 broadcast(res);
+                                break;
                             }
                         }
                     }
