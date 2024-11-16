@@ -14,12 +14,12 @@ public class GameSXServer {
     private static final int PORT = 12345;
     private static List<ClientHandler> clients = new ArrayList<>();
     private static Connection dbConnection;
-    private static int check=1;
     private static String roomIdplay;
+
     public static void main(String[] args) {
         try {
             // Initialize database connection
-            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "dong1808");
+            dbConnection = DriverManager.getConnection("jdbc:mysql://localhost:3306/gamesx", "root", "letrungduc45");
 
             try (ServerSocket serverSocket = new ServerSocket(PORT)) {
                 System.out.println("Server is running...");
@@ -46,7 +46,8 @@ public class GameSXServer {
         private PrintWriter out;
         private String username;
         private int score = 0;
-
+        private  int i;
+        private int dem=0;
         // Danh sách các từ để chơi
         private static final List<String> WORDS = Arrays.asList("apple", "banana", "orange", "grape", "mango");
 
@@ -242,29 +243,61 @@ public class GameSXServer {
                             updateStmt.setString(1, score);
                             updateStmt.setInt(2, Integer.parseInt(roomId));
                             updateStmt.executeUpdate();
+
                         } else {
                             System.out.println("User not in room with ID: " + roomId);
                             out.println("SCORE_FAIL User not in room");
                             return;
                         }
                     }
-
-                    while (true) {
+                    i=1;
+                    if(i==1){
                         PreparedStatement stmt = dbConnection.prepareStatement("SELECT score_1, score_2 FROM rooms WHERE id = ?");
                         stmt.setInt(1, Integer.parseInt(roomId));
                         ResultSet rs1 = stmt.executeQuery();
-                        if (rs1.next()) {
+                        if (rs1.next() && i==1 ) {
                             String Score1 = rs1.getString("score_1");
                             String Score2 = rs1.getString("score_2");
-                            if (Score1 != null && Score2 != null && !Score1.equals("") && !Score2.equals("")) {
+                            if (Score1 != null  && Score2 != null && !Score1.equals("") && !Score2.equals("")) {
                                 String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
+                                System.out.println("res: "+res);
+                                i=0;
+                                //  broadcast( res);
+                                System.out.println("i= "+i);
+
+                            }
+                            if(i==0){
+                                System.out.println("Cộng điêm totalpoint ");
                                 handleTotalPoint(player1_id, player2_id, Score1, Score2);
-                                System.out.println(res);
-                                broadcast(res);
-                                break;
+                                i+=2;
+
+                            }else {
+                                System.out.println("i= "+i);
                             }
                         }
                     }
+                    i=1;
+                    while(true){
+                        PreparedStatement stmt = dbConnection.prepareStatement("SELECT score_1, score_2 FROM rooms WHERE id = ?");
+                        stmt.setInt(1, Integer.parseInt(roomId));
+                        ResultSet rs1 = stmt.executeQuery();
+                        if (rs1.next() && i==1 ) {
+                            String Score1 = rs1.getString("score_1");
+                            String Score2 = rs1.getString("score_2");
+                            if (Score1 != null  && Score2 != null && !Score1.equals("") && !Score2.equals("")) {
+                                String res = "RESULT " + roomId + " " + player1_id + " " + player2_id + " " + Score1 + " " + Score2;
+                                System.out.println("res: "+res);
+                                i=0;
+                                broadcast( res);
+                                System.out.println("i= "+i);
+                                break;
+                            }
+
+                        }
+                    }
+
+
+
 
                 } catch (SQLException e) {
                     e.printStackTrace();
@@ -279,14 +312,16 @@ public class GameSXServer {
         private void handleTotalPoint(String player1_id, String player2_id, String Score1, String Score2) {
             int Score1Value = Integer.parseInt(Score1);
             int Score2Value = Integer.parseInt(Score2);
+            this.i=1;
             if (Score1Value > Score2Value) {
                 try {
                     PreparedStatement stmt = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
                     stmt.setString(1, player1_id);
                     ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
+                    if (rs.next() && this.i==1) {
                         int totalpoint = rs.getInt("totalpoint");
                         totalpoint += 2;
+                        this.i+=1;
                         PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
                         stmt2.setInt(1, totalpoint);
                         stmt2.setString(2, player1_id);
@@ -295,19 +330,10 @@ public class GameSXServer {
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
-                    stmt.setString(1, player2_id);
-                    rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        int totalpoint = rs.getInt("totalpoint");
-                        totalpoint += 0;
-                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
-                        stmt2.setInt(1, totalpoint);
-                        stmt2.setString(2, player2_id);
-                        stmt2.executeUpdate();
-                        System.out.println("PL2 +0");
-                    } else {
-                        out.println("USER_NOT_FOUND");
-                    }
+
+                    System.out.println("PL2 +0");
+
+
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -316,22 +342,27 @@ public class GameSXServer {
                     PreparedStatement stmt = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
                     stmt.setString(1, player1_id);
                     ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
+
+                    if (rs.next() && this.i==1) {
                         int totalpoint = rs.getInt("totalpoint");
                         totalpoint += 1;
+                        this.i++;
                         PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
                         stmt2.setInt(1, totalpoint);
                         stmt2.setString(2, player1_id);
                         stmt2.executeUpdate();
                         System.out.println("PL1 +1");
+
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
-                    stmt.setString(1, player2_id);
-                    rs = stmt.executeQuery();
-                    if (rs.next()) {
+                    PreparedStatement stmt1 = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
+                    stmt1.setString(1, player2_id);
+                    rs = stmt1.executeQuery();
+                    if (rs.next() && this.i==2) {
                         int totalpoint = rs.getInt("totalpoint");
                         totalpoint += 1;
+                        this.i++;
                         PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
                         stmt2.setInt(1, totalpoint);
                         stmt2.setString(2, player2_id);
@@ -343,14 +374,15 @@ public class GameSXServer {
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
-            } else {
+            } else  {
                 try {
                     PreparedStatement stmt = dbConnection.prepareStatement("SELECT totalpoint FROM users WHERE userid = ?");
                     stmt.setString(1, player2_id);
                     ResultSet rs = stmt.executeQuery();
-                    if (rs.next()) {
+                    if (rs.next() && this.i==1) {
                         int totalpoint = rs.getInt("totalpoint");
                         totalpoint += 2;
+                        this.i++;
                         PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
                         stmt2.setInt(1, totalpoint);
                         stmt2.setString(2, player2_id);
@@ -359,19 +391,9 @@ public class GameSXServer {
                     } else {
                         out.println("USER_NOT_FOUND");
                     }
-                    stmt.setString(1, player1_id);
-                    rs = stmt.executeQuery();
-                    if (rs.next()) {
-                        int totalpoint = rs.getInt("totalpoint");
-                        totalpoint += 0;
-                        PreparedStatement stmt2 = dbConnection.prepareStatement("UPDATE users SET totalpoint = ? WHERE userid = ?");
-                        stmt2.setInt(1, totalpoint);
-                        stmt2.setString(2, player1_id);
-                        stmt2.executeUpdate();
-                        System.out.println("PL1 +0");
-                    } else {
-                        out.println("USER_NOT_FOUND");
-                    }
+
+                    System.out.println("PL1 +0");
+
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -647,9 +669,14 @@ public class GameSXServer {
         }
 
         private void broadcast(String message) {
-            System.out.println("Broadcasting message: " + message);
+            System.out.println("Number of clients: " + clients.size());
+             dem=0;
             for (ClientHandler client : clients) {
+                dem++;
+                System.out.println(dem + " :Broadcasting message: " + message);
                 client.out.println(message);
+
+
             }
         }
     }

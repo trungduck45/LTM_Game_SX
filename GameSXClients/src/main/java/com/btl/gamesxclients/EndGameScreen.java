@@ -14,7 +14,7 @@ public class EndGameScreen extends JFrame {
     private JLabel resultLabel;
     private Socket socket;
     private PrintWriter out;
-    private Scanner in;
+    private BufferedReader in;
 
     public EndGameScreen(String username, String roomId, String userId, int score) {
         this.userId = userId;
@@ -53,35 +53,34 @@ public class EndGameScreen extends JFrame {
 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
+    //    initializeServerConnection();
 
         sendScore(roomId, userId, String.valueOf(score));
-
+       // startListeningForEvents();
         setVisible(true);
     }
+
 
     private void sendScore(String roomId, String userId, String score) {
         try {
             socket = new Socket("localhost", 12345);
             out = new PrintWriter(socket.getOutputStream(), true);
-            in = new Scanner(socket.getInputStream());
+            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
             out.println("SEND_SCORE " + roomId + " " + userId + " " + score);
 
             new Thread(() -> {
-                while (true) {
-                    try {
-                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        String response = in.readLine();
+                try {
+                    String response;
+                    while ((response = in.readLine()) != null) {
                         if (response.startsWith("RESULT")) {
-                            String comparisonResult = response;
                             System.out.println(response);
-                            handleComparisonResult(comparisonResult);
+                            handleComparisonResult(response);
                             break;
                         }
-                    } catch (Exception e) {
-                        System.out.println("Error: " + e);
-                        break;
                     }
+                } catch (IOException e) {
+                    System.out.println("Error reading from server: " + e);
                 }
             }).start();
         } catch (IOException e) {
@@ -89,6 +88,32 @@ public class EndGameScreen extends JFrame {
             System.err.println("Error sending score to server.");
         }
     }
+//    private void initializeServerConnection() {
+//        try {
+//            socket = new Socket("localhost", 12345);
+//            out = new PrintWriter(socket.getOutputStream(), true);
+//            in = new Scanner(socket.getInputStream());
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            JOptionPane.showMessageDialog(this, "Error connecting to server.");
+//        }
+//    }
+//
+//    private void startListeningForEvents() {
+//        new Thread(() -> {
+//            while (true) {
+//                if (in.hasNextLine()) {
+//                    String response1 = in.nextLine();
+//                    if (response1.startsWith("RESULT")) {
+//                        String comparisonResult = response1;
+//                        System.out.println(response1);
+//                        handleComparisonResult(comparisonResult);
+//                        break;
+//                    }
+//                }
+//            }
+//        }).start();
+//    }
 
     private void handleComparisonResult(String comparisonResult) {
         String[] parts = comparisonResult.split(" ");
@@ -117,21 +142,22 @@ public class EndGameScreen extends JFrame {
         }
     }
 
+
     private void exit() {
         deleteRoom();
-        try {
-            if (socket != null) {
-                socket.close();
-            }
-            if (out != null) {
-                out.close();
-            }
-            if (in != null) {
-                in.close();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        try {
+//            if (socket != null) {
+//                socket.close();
+//            }
+//            if (out != null) {
+//                out.close();
+//            }
+//            if (in != null) {
+//                in.close();
+//            }
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
         dispose();
     }
 
