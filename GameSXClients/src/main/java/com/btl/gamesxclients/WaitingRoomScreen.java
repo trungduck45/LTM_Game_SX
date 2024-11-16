@@ -271,7 +271,7 @@ public class WaitingRoomScreen extends JFrame {
         String response = in.nextLine();
         if ("JOIN_SUCCESS".equals(response)) {
             //out.println("START_GAME " + roomId);
-            messageLabel.setText("Joined room successfully.");
+            //messageLabel.setText("Joined room successfully.");
 
             String response_room = in.nextLine();
             if (response_room != null && response_room.startsWith("ROOM_INFO:")) {
