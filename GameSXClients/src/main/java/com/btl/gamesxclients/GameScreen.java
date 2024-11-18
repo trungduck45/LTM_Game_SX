@@ -8,18 +8,17 @@ import java.util.*;
 import java.util.List;
 import java.util.Timer;
 
-
 public class GameScreen extends JFrame {
-    private List<JTextField> inputFields = new ArrayList<>();
+    private List<JButton> inputButtons = new ArrayList<>();
     private JPanel serverRow;
     private JPanel inputRow;
     private PrintWriter out;
     private BufferedReader in;
     private final String userId;
 
-    private  String DayCanSXSUM;
-    private  String DaycanSX;
-    private  String roomId;
+    private String DayCanSXSUM;
+    private String DaycanSX;
+    private String roomId;
 
     private JLabel scoreLabel;
     private int scoreSum = 0;
@@ -36,10 +35,11 @@ public class GameScreen extends JFrame {
     private int currentLevelValue = 1;
     private final int MAX_LEVELS = 10;  // Số màn chơi tối đa
 
-    private static final List<String> WORDS = Arrays.asList("apple", "banana", "orange", "grape", "mango");
+    private static final List<String> WORDS = Arrays.asList("a,p,p,l,e", "b,a,n,a,n,a", "o,r,a,n,g,e", "g,r,a,p,e", "m,a,n,g,o");
 
+    private JButton firstSelectedButton = null;
 
-    public GameScreen(String serverAddress, String userId , String roomId , String userIdDoiThu, String message) {
+    public GameScreen(String serverAddress, String userId, String roomId, String userIdDoiThu, String message) {
         this.userId = userId;
         try {
             Socket socket = new Socket(serverAddress, 12345);
@@ -47,18 +47,18 @@ public class GameScreen extends JFrame {
             out = new PrintWriter(socket.getOutputStream(), true);
 
             System.out.println("Dãy cần SX:" + message);
-            this.roomId= roomId;
+            this.roomId = roomId;
             initGameUI(userId, roomId, userIdDoiThu, message);
-
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(this, "Không thể kết nối đến server!", "Lỗi", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
         }
     }
-    private void initGameUI(String userId,String roomId, String userIdDoiThu,String question) {
-        setTitle("Phòng chơi số "+roomId);
-        setSize(500, 300);
+
+    private void initGameUI(String userId, String roomId, String userIdDoiThu, String question) {
+        setTitle("Phòng chơi số " + roomId);
+        setSize(650, 300);
         setLayout(new BorderLayout());
         // Fetch user profile
         UserProfile userProfile1 = UserProfileService.getUserProfile(userId);
@@ -72,7 +72,6 @@ public class GameScreen extends JFrame {
         ingameNameDThuLabel = new JLabel("Đối thủ: " + userProfile2.getIngameName());
         JPanel namePanel = new JPanel(new FlowLayout());
         namePanel.add(ingameNameLabel);
-
         namePanel.add(ingameNameDThuLabel);
 
         serverRow = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -99,14 +98,10 @@ public class GameScreen extends JFrame {
 
         add(mainPanel, BorderLayout.CENTER);
 
-//        JButton sendButton = new JButton("Check");
-//        sendButton.addActionListener(e -> CheckDataAnswer());
-
         JButton exitButton = new JButton("Thoát Game");
         exitButton.addActionListener(e -> exitScreen());
 
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-//        buttonPanel.add(sendButton);
         buttonPanel.add(exitButton);
 
         add(buttonPanel, BorderLayout.SOUTH);
@@ -115,22 +110,20 @@ public class GameScreen extends JFrame {
         setVisible(true);
         DayCanSXSUM = question;
         String[] ListNumWord = question.split(";");
-        DaycanSX =ListNumWord[currentLevelValue-1];
+        DaycanSX = ListNumWord[currentLevelValue - 1];
 
-        if(DaycanSX.charAt(0) >='0' && DaycanSX.charAt(0)<='9' ){
+        if (DaycanSX.charAt(0) >= '0' && DaycanSX.charAt(0) <= '9') {
             String[] number = DaycanSX.split(",");
             updateServerNumbers(number);
-        }else {
+        } else {
             updateServerWord(DaycanSX);
         }
-
-
     }
 
     private void increaseLevel() {
-        if (currentLevelValue  < MAX_LEVELS) {
-       currentLevelValue++;
-        currentLevel.setText("Màn " + currentLevelValue);
+        if (currentLevelValue < MAX_LEVELS) {
+            currentLevelValue++;
+            currentLevel.setText("Màn " + currentLevelValue);
         } else {
             goToEndGameScreen(); // Chuyển sang trang EndGame khi chơi hết màn 10
         }
@@ -138,7 +131,7 @@ public class GameScreen extends JFrame {
 
     private void goToEndGameScreen() {
         dispose(); // Đóng cửa sổ GameScreen hiện tại
-        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText().split(" ")[ingameNameLabel.getText().split(" ").length - 1],roomId,userId,scoreSum);
+        EndGameScreen endGameScreen = new EndGameScreen(ingameNameLabel.getText().split(" ")[ingameNameLabel.getText().split(" ").length - 1], roomId, userId, scoreSum);
         endGameScreen.setVisible(true);
     }
 
@@ -146,7 +139,7 @@ public class GameScreen extends JFrame {
         // Xóa các phần tử cũ trước khi thêm mới
         serverRow.removeAll();
         inputRow.removeAll();
-        inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
+        inputButtons.clear(); // Xóa danh sách các ô nhập liệu cũ
 
         // Nối các số thành một chuỗi mà không có dấu ngoặc
         String numbersString = String.join(", ", numbers);
@@ -155,11 +148,12 @@ public class GameScreen extends JFrame {
         JLabel serverLabel = new JLabel(numbersString);
         serverRow.add(serverLabel);
 
-        // Thêm các ô nhập liệu tương ứng với mỗi số
+        // Thêm các nút tương ứng với mỗi số
         for (String number : numbers) {
-            JTextField inputField = new JTextField(2);
-            inputFields.add(inputField);
-            inputRow.add(inputField);
+            JButton inputButton = new JButton(number);
+            inputButton.addActionListener(e -> handleButtonClick(inputButton));
+            inputButtons.add(inputButton);
+            inputRow.add(inputButton);
         }
 
         // Cập nhật giao diện sau khi thêm các thành phần mới
@@ -175,17 +169,19 @@ public class GameScreen extends JFrame {
         // Xóa các phần tử cũ trước khi thêm mới
         serverRow.removeAll();
         inputRow.removeAll();
-        inputFields.clear(); // Xóa danh sách các ô nhập liệu cũ
+        inputButtons.clear(); // Xóa danh sách các ô nhập liệu cũ
+
         // Tạo nhãn hiển thị
         JLabel serverLabel = new JLabel(word);
         serverRow.add(serverLabel);
 
-        // Thêm các ô nhập liệu tương ứng với mỗi số
-
-        JTextField inputField = new JTextField(10);
-        inputFields.add(inputField);
-        inputRow.add(inputField);
-
+        // Thêm các nút tương ứng với mỗi ký tự
+        for (char c : word.toCharArray()) {
+            JButton inputButton = new JButton(String.valueOf(c));
+            inputButton.addActionListener(e -> handleButtonClick(inputButton));
+            inputButtons.add(inputButton);
+            inputRow.add(inputButton);
+        }
 
         // Cập nhật giao diện sau khi thêm các thành phần mới
         serverRow.revalidate();
@@ -196,52 +192,57 @@ public class GameScreen extends JFrame {
         startTimer(); // Khởi động lại bộ đếm khi có câu mới
     }
 
+    private void handleButtonClick(JButton clickedButton) {
+        if (firstSelectedButton == null) {
+            firstSelectedButton = clickedButton;
+            firstSelectedButton.setFont(firstSelectedButton.getFont().deriveFont(Font.BOLD));
+        } else {
+            // Swap text of the two buttons
+            String tempText = firstSelectedButton.getText();
+            firstSelectedButton.setText(clickedButton.getText());
+            clickedButton.setText(tempText);
+            firstSelectedButton.setFont(firstSelectedButton.getFont().deriveFont(Font.PLAIN));
+            firstSelectedButton = null;
+        }
+    }
+
     private void CheckDataAnswer() {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm khi người dùng nhấn Check
         }
         try {
             StringBuilder inputData = new StringBuilder();
-            // Lấy dữ liệu từ các ô nhập liệu
-            for (JTextField field : inputFields) {
-                String text = field.getText().trim();
-                if (text.length() < 1) {
-                    text = "0";
-                }
-                if (text.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đủ dữ liệu!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
+            // Lấy dữ liệu từ các nút
+            for (JButton button : inputButtons) {
+                String text = button.getText().trim();
                 inputData.append(text).append(",");
             }
             // Xóa dấu phẩy cuối cùng
             if (inputData.length() > 0) {
                 inputData.setLength(inputData.length() - 1);
             }
-            String DayDaSX= String.valueOf(inputData);
+            String DayDaSX = String.valueOf(inputData);
             System.out.println("day ban dau: " + DaycanSX);
-            System.out.println("cau tra loi: " + DayDaSX );
-            int ok=1;
-            if(DaycanSX.charAt(0) >='0' && DaycanSX.charAt(0)<='9' ){
-                if(isSorted(ChuyenVeDayNumbers(DayDaSX),ChuyenVeDayNumbers(DaycanSX))){
+            System.out.println("cau tra loi: " + DayDaSX);
+            int ok = 1;
+            if (DaycanSX.charAt(0) >= '0' && DaycanSX.charAt(0) <= '9') {
+                if (isSorted(ChuyenVeDayNumbers(DayDaSX), ChuyenVeDayNumbers(DaycanSX))) {
                     scoreSum += 10;
-                } else{
+                } else {
                     scoreSum -= 5;
                 }
-            }else{
-                for(String word : WORDS){
-                    if(DayDaSX.equals(word)){
+            } else {
+                for (String word : WORDS) {
+                    if (DayDaSX.equals(word)) {
                         scoreSum += 10;
                         ok = 0;
                         break;
                     }
                 }
-                if(ok==1) scoreSum -= 5;
+                if (ok == 1) scoreSum -= 5;
             }
-            //System.out.println("Diem : "+ scoreSum);
-            if(currentLevelValue<MAX_LEVELS) {
-
-                scoreLabel.setText("Điểm: "+scoreSum);
+            if (currentLevelValue < MAX_LEVELS) {
+                scoreLabel.setText("Điểm: " + scoreSum);
                 String[] ListNumWord = DayCanSXSUM.split(";");
                 DaycanSX = ListNumWord[currentLevelValue];
 
@@ -258,11 +259,13 @@ public class GameScreen extends JFrame {
         }
         increaseLevel();
     }
+
     private void startTimer() {
+        firstSelectedButton = null;
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
-        remainingTime = 3; // Thời gian đếm ngược
+        remainingTime = 10; // Thời gian đếm ngược
         timerLabel.setText("Thời gian: " + remainingTime + "s"); // Cập nhật nhãn thời gian
 
         timer = new Timer();
@@ -280,6 +283,7 @@ public class GameScreen extends JFrame {
                 });
             }
         }, 1000, 1000); // Thực hiện mỗi giây
+        firstSelectedButton = null;
     }
 
     private void deleteRoom() {
@@ -306,15 +310,10 @@ public class GameScreen extends JFrame {
         if (timer != null) {
             timer.cancel(); // Hủy bộ đếm trước đó nếu có
         }
-        deleteRoom();
         dispose(); // Đóng cửa sổ GameScreen
         // new WaitingRoomScreen(username, userId, ingameName); // Mở lại màn hình NameScreen
     }
 
-//    public void updateScore(String score) {
-//        SwingUtilities.invokeLater(() -> scoreLabel.setText("Điểm: " + score));
-//        scoreSum = Integer.parseInt(score);
-//    }
     private boolean isSorted(List<Integer> list, List<Integer> originalList) {
         // Tạo bản sao của danh sách ban đầu để sắp xếp
         List<Integer> ascendingList = new ArrayList<>(originalList);
@@ -340,7 +339,6 @@ public class GameScreen extends JFrame {
         }
         return numbers;
     }
-
 
     public void showResultMessage(String message) {
         SwingUtilities.invokeLater(() -> {
